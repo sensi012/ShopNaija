@@ -1,0 +1,16 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+
+# Lambda build artifacts
+modules/lambda/build/
+
+# OS/editor
+.DS_Store
+*.swp
+
+# backend.sh
+backend12.sh
