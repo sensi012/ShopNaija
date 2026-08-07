@@ -17,6 +17,7 @@ permissions:
 env:
   AWS_REGION: eu-west-1
   PROJECT_NAME: shopnaija
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
 jobs:
   # ------------------------------------------------------------------
@@ -74,7 +75,7 @@ jobs:
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} # e.g. arn:aws:iam::210450948229:role/shopnaija-deployment-role
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsSession
           aws-region: ${{ env.AWS_REGION }}
 
@@ -123,7 +124,7 @@ jobs:
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsSession
           aws-region: ${{ env.AWS_REGION }}
 

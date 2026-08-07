@@ -192,5 +192,21 @@ bash remove-backend-bucket.sh
 ```
 
 
-Same — capture what surprised you, what you'd do differently next time
-(e.g., NAT Gateway cost, RDS Multi-AZ failover behavior you tested, etc.)
+---
+
+## 💡 What Surprised Me & Lessons Learned
+
+### **1. Surprises During Implementation**
+- **SSM Environment Variable Isolation**: `user_data` wrote `DB_SECRET_ARN` and `DB_ENDPOINT` to `/etc/environment` at boot, but SSM Run Command executed `deploy.py` in a non-interactive shell that did **not** source `/etc/environment` by default. This caused Uvicorn to fall back to `localhost:5432` (`Connection refused`), throwing `502 Bad Gateway` on the ALB until explicit sourcing was added to `start.sh`.
+- **Directory Redirects vs ALB Health Checks**: Using Python's `python3 -m http.server 8080 --directory /var/www/health` caused `GET /health` to return `301 Moved Permanently` (redirecting to `/health/`). Because ALB expected `200 OK`, new instances were flagged `UNHEALTHY` and recycled continuously. Replacing it with a custom Python HTTP 200 handler fixed the replacement loop permanently.
+- **Zero-SSH Operability via SSM**: Managing, deploying, and debugging private EC2 instances without open Port 22 SSH keys or public IPs proved simpler, safer, and cleaner using AWS Systems Manager (SSM) and VPC Interface Endpoints.
+- **CloudFront OAC Security**: An S3 bucket can remain 100% private (`block_public_access = true`) while CloudFront serves assets globally using Origin Access Control (OAC) with SigV4 signatures.
+
+---
+
+### **2. What I Would Do Differently Next Time**
+- **Pre-Bake AMIs (Packer / EC2 Image Builder)**: Instead of running `dnf install` and `pip install` inside `user_data.sh.tpl` on every instance launch (taking 2–3 minutes), pre-bake a custom AMI with Python 3.12 and dependencies pre-installed. Instance boot time drops to under 20 seconds.
+- **Explicit Environment Sourcing in System Scripts**: Always add `[ -f /etc/environment ] && set -a && source /etc/environment && set +a` at the top of every startup script (`start.sh`) from day one.
+- **Dedicated Application Health Check Endpoint**: Implement a lightweight `@router.get("/health")` endpoint in FastAPI that returns `{"status": "ok"}` without database queries, ensuring instant health checks.
+- **GitHub OIDC from Day One**: Use AWS OIDC Web Identity Federation (`role-to-assume`) for CI/CD from project initialization, completely eliminating static IAM access keys (`AWS_ACCESS_KEY_ID`).
+- **Cost vs. Fault Tolerance Toggles**: Use `single_nat_gateway = true` during dev/testing to save ~$35/mo per AZ, but switch to `single_nat_gateway = false` in production so a single AZ outage does not interrupt outbound traffic.
