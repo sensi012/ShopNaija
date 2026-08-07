@@ -73,6 +73,7 @@ variable "asg_desired_capacity" {
   default = 2
 }
 
+
 variable "db_instance_class" {
   description = "RDS instance class"
   type        = string
@@ -130,4 +131,17 @@ variable "tags" {
     ManagedBy   = "Terraform"
     Environment = "production"
   }
+}
+
+# GitHub OIDC - used to scope which GitHub repo can assume the deployment role
+variable "github_org" {
+  description = "GitHub organisation or username (e.g. sensi012)"
+  type        = string
+  default     = "sensi012"
+}
+
+variable "github_repo" {
+  description = "GitHub repository name (e.g. ShopNaija)"
+  type        = string
+  default     = "ShopNaija"
 }

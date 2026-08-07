@@ -109,6 +109,10 @@ resource "aws_iam_role_policy" "lambda_s3" {
 # ------------------------------------------------------------------
 # CI/CD Deployment Role (GitHub OIDC & EC2 Assume)
 # ------------------------------------------------------------------
+
+# Fetch the current AWS Account ID dynamically (avoids hardcoding)
+data "aws_caller_identity" "current" {}
+
 data "aws_iam_policy_document" "deployment_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -122,12 +126,18 @@ data "aws_iam_policy_document" "deployment_assume" {
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
       type        = "Federated"
-      identifiers = ["arn:aws:iam::*:oidc-provider/token.actions.githubusercontent.com"]
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"]
     }
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
+    }
+    # Restrict to only your specific GitHub repo and branch
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:sensi012/*"]
     }
   }
 }
