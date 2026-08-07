@@ -76,7 +76,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          role-session-name: GitHubActionsSession
+          role-session-name: Github-action 
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Format Check
