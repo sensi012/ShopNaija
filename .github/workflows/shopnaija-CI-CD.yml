@@ -9,6 +9,7 @@ on:
       - main
   workflow_dispatch:
 
+# Required for OIDC JWT token authentication with AWS
 permissions:
   id-token: write
   contents: read
@@ -18,9 +19,9 @@ env:
   PROJECT_NAME: shopnaija
 
 jobs:
-
+  # ------------------------------------------------------------------
   # Job 1: Test & Lint Python FastAPI Application
-  
+  # ------------------------------------------------------------------
   test-app:
     name: Test Application Code
     runs-on: ubuntu-latest
@@ -43,9 +44,7 @@ jobs:
 
       - name: Lint Application Code
         run: |
-          # Stop build if there are Python syntax errors or undefined names
           flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Exit-zero treats all errors as warnings
           flake8 app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Check Syntax of App Files
@@ -59,7 +58,7 @@ jobs:
   # Job 2: Validate & Plan Terraform Infrastructure
   # ------------------------------------------------------------------
   terraform-ci:
-    name: 🏗️ Terraform Init, Validate & Plan
+    name: Terraform Init, Validate & Plan
     runs-on: ubuntu-latest
 
     steps:
@@ -71,11 +70,12 @@ jobs:
         with:
           terraform_version: "1.6.0"
 
-      - name: Configure AWS Credentials
+      # AWS OIDC Authentication (No long-lived access keys required)
+      - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} # e.g. arn:aws:iam::210450948229:role/shopnaija-deployment-role
+          role-session-name: GitHubActionsSession
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Format Check
@@ -100,7 +100,7 @@ jobs:
   # Job 3: Deploy Infrastructure & Code to AWS (Main Branch Only)
   # ------------------------------------------------------------------
   deploy:
-    name: 🚀 Deploy Infrastructure & Application
+    name: Deploy Infrastructure & Application
     needs: [test-app, terraform-ci]
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
@@ -119,11 +119,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Configure AWS Credentials
+      #  AWS OIDC Authentication (No long-lived access keys required)
+      - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsSession
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Create Production tfvars

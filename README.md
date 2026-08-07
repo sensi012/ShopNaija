@@ -1,171 +1,196 @@
-# ShopNaija — Production AWS Infrastructure
+# 🛒 ShopNaija — Production AWS Infrastructure & Full-Stack Application
 
 Infrastructure-as-code for migrating ShopNaija from a single VPS to a scalable,
-secure, monitored AWS environment. This repo provisions infrastructure only —
-application code deployment is a separate concern layered on top.
+secure, monitored AWS environment. Production-grade, highly available, auto-scaling, and monitored AWS cloud infrastructure for **ShopNaija**, paired with a full-stack Python/FastAPI e-commerce application and automated continuous deployment.
 
-## Architecture Overview
+---
+
+## 🏗️ Architecture Overview
 
 ```
-Internet
-   │
-CloudFront (bonus - not yet wired in, see Next Steps)
-   │
-Application Load Balancer (public subnets, 2 AZs)
-   │
-EC2 Auto Scaling Group (private app subnets, 2 AZs)
-   │
-RDS PostgreSQL, Multi-AZ (private db subnets, no internet route)
-
-Supporting services (not sequential, wrap around the above):
-S3 (uploads/product images) → Lambda (resize on upload) → SNS (admin notify)
-API Gateway (exposes Lambda as REST endpoint)
-CloudWatch (alarms) + SNS (alerts) → email
-IAM (least-privilege roles per service, no shared credentials)
-Secrets Manager (DB credentials, auto-generated, never in code)
+                                  USER BROWSER / CLIENT
+                                            │
+                                1. HTTPS / HTTP Requests
+                                            ▼
+                                ┌───────────────────────┐
+                                │    CloudFront CDN     │ (Global Edge Caching, DDoS Protection)
+                                └───────────┬───────────┘
+                                            │
+               ┌────────────────────────────┴────────────────────────────┐
+               │ Dynamic Traffic (Default /*)                            │ Static Media (/uploads/*, /processed/*)
+               ▼                                                         ▼
+┌──────────────────────────────┐                              ┌─────────────────────┐
+│  Application Load Balancer   │ (Public Subnets, 2 AZs)      │ Private S3 Bucket   │
+│  (Port 80 -> 443 Redirect)   │                              │ (OAC Secured)       │
+└──────────────┬───────────────┘                              └─────────────────────┘
+               │
+               │ 2. Health Checked Traffic (Port 8080)
+               ▼
+┌───────────────────────────────────────────────────────────────────────────────────┐
+│ PRIVATE APPLICATION TIER (Multi-AZ EC2 Auto Scaling Group)                         │
+│                                                                                   │
+│   FastAPI Web App (Uvicorn)  ──>  SQLAlchemy  ──>  boto3 AWS SDK                 │
+│   (Sourced env from /etc/environment)                                             │
+└──────────────┬─────────────────────────┬──────────────────────────┬───────────────┘
+               │                         │                          │
+               │ 3. Fetch Secret         │ 4. Read/Write DB         │ 5. S3 Gateway VPCE
+               ▼                         ▼                          ▼
+┌──────────────────────────────┐ ┌──────────────────────┐ ┌─────────────────────────┐
+│     AWS Secrets Manager      │ │  RDS PostgreSQL DB   │ │   S3 Bucket / Lambda    │
+│ (Auto-Generated Credentials) │ │ (Isolated DB Subnet) │ │ (Event-Driven Resizing) │
+└──────────────────────────────┘ └──────────────────────┘ └────────────┬────────────┘
+                                                                       │
+                                                                       │ 6. Thumbnail Event
+                                                                       ▼
+                                                          ┌─────────────────────────┐
+                                                          │   AWS SNS & CloudWatch  │
+                                                          │  (Alerts & Monitoring)  │
+                                                          └─────────────────────────┘
 ```
 
-**Traffic flow:** Internet → ALB (only public-facing resource) → EC2 in private
-subnets → RDS in private subnets with zero internet route. Each tier's security
-group only accepts traffic from the tier directly in front of it.
+**Traffic flow:** Internet → CloudFront → ALB (Public Subnets) → EC2 Auto Scaling Group (Private App Subnets) → RDS PostgreSQL Multi-AZ (Private DB Subnets with zero internet route).
 
-## Repository Structure
+---
+
+## 📁 Repository Structure
 
 ```
 .
-├── main.tf                  # root module - wires everything together
-├── variables.tf              # root input variables
-├── outputs.tf                # root outputs (ALB DNS, API URL, etc.)
-├── terraform.tfvars.example  # copy to terraform.tfvars, do not commit real one
-├── modules/
-│   ├── vpc/                  # networking: subnets, IGW, NAT, route tables
-│   ├── security/              # security groups (ALB -> EC2 -> RDS chain)
-│   ├── iam/                   # least-privilege roles: EC2, Lambda, CI/CD
-│   ├── storage/                # S3 bucket, versioning, lifecycle, policy
-│   ├── database/                # RDS, Secrets Manager credentials
-│   ├── compute/                 # Launch Template, ASG, ALB, listeners
-│   ├── lambda/                   # image processing function
-│   ├── api_gateway/               # REST API in front of Lambda
-│   └── monitoring/                 # CloudWatch alarms, SNS topic
-└── .github/workflows/terraform.yml # CI/CD pipeline
+├── main.tf                            # Root Terraform module wiring all resources
+├── provider.tf                        # AWS Provider & required version pins
+├── backend.tf                         # S3 Remote State backend configuration
+├── variable.tf                        # Root input variables
+├── output.tf                          # Root deployment outputs (ALB DNS, API URL, S3 Bucket)
+├── terraform.tfvars.example           # Example variable input file
+├── backend-bucket.sh                  # Bootstrap script for Terraform S3 state bucket
+├── remove-backend-bucket.sh           # Cleanup script for S3 state bucket
+├── deploy.py                          # Automated Python deployment script (SSM + S3)
+│
+├── app/                               # Full-Stack FastAPI Web Application
+│   ├── main.py                        # FastAPI entry point & template setup
+│   ├── config.py                      # Dynamic AWS Secrets Manager & settings loader
+│   ├── database.py                    # SQLAlchemy ORM database session binding
+│   ├── models.py                      # Database models (User, Product, Category, Order, Cart)
+│   ├── security.py                    # Password hashing (bcrypt) & auth logic
+│   ├── seed.py                        # Database seeder (products, categories, admin user)
+│   ├── start.sh                       # EC2 startup script (sources /etc/environment, starts Uvicorn)
+│   ├── requirements.txt               # Application Python dependencies
+│   ├── routers/                       # Application API & HTML route handlers
+│   └── templates/                     # Jinja2 HTML storefront & admin templates
+│
+├── module/                            # Modularized Infrastructure Components
+│   ├── vpc/                           # VPC, 6 Subnets across 3 Tiers (Public/App/DB), IGW, NAT, VPCE
+│   ├── security/                      # Strict Security Group chain (ALB -> EC2 -> RDS)
+│   ├── iam/                           # Least-privilege IAM roles (EC2, Lambda, CI/CD)
+│   ├── storage/                       # S3 uploads bucket, encryption, versioning, lifecycle rules
+│   ├── database/                      # RDS PostgreSQL Multi-AZ & AWS Secrets Manager credentials
+│   ├── compute/                       # Launch Template, EC2 Auto Scaling Group, ALB, Health Checks
+│   ├── cdn/                           # CloudFront Distribution with Dual-Origin & OAC Security
+│   ├── lambda/                        # Pillow image processing function & S3 event trigger
+│   ├── api_gateway/                   # REST API Gateway in front of Lambda
+│   └── monitoring/                    # CloudWatch Metric Alarms (CPU, Memory, Disk) & SNS Topic
+│
+└── .github/workflows/
+    └── shopnaija-CI-CD.yml            # GitHub Actions CI/CD Pipeline (Lint, Validate, Apply, Deploy)
 ```
 
-## Prerequisites
+---
 
-- Terraform >= 1.6.0
-- AWS CLI configured with sufficient permissions (or use the CI/CD OIDC role)
-- An S3 bucket + DynamoDB table for remote state, created **before** first `init`:
+## 🛠️ Prerequisites
+
+- **Terraform** >= 1.6.0
+- **AWS CLI** configured with administrator or deploy permissions
+- **Python** 3.12+ (for running `deploy.py` locally or in CI/CD)
+- An S3 bucket for Terraform remote state created before running `terraform init`:
 
 ```bash
-aws s3api create-bucket --bucket shopnaija-terraform-state --region eu-west-1 \
-  --create-bucket-configuration LocationConstraint=eu-west-1
-aws s3api put-bucket-versioning --bucket shopnaija-terraform-state \
-  --versioning-configuration Status=Enabled
-
-aws dynamodb create-table --table-name shopnaija-terraform-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST
+# Run the provided bootstrap script:
+bash backend-bucket.sh
 ```
 
-## Setup Instructions
+---
 
-1. Clone the repo and copy the example vars:
+## 🚀 Quick Start & Deployment Guide
 
-   ```bash
-   cp terraform.tfvars.example terraform.tfvars
-   # edit terraform.tfvars with real values
-   ```
-2. Update `main.tf` backend block region if different from `eu-west-1`.
-3. In `modules/iam/main.tf`, replace `ACCOUNT_ID` and
-   `YOUR_GITHUB_ORG/shopnaija-infra` in the OIDC trust policy with real values.
-   You'll also need to create the GitHub OIDC provider once per AWS account:
-
-   ```bash
-   aws iam create-open-id-connect-provider \
-     --url https://token.actions.githubusercontent.com \
-     --client-id-list sts.amazonaws.com \
-     --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
-   ```
-4. In GitHub repo settings, add secret `AWS_DEPLOY_ROLE_ARN` with the ARN of
-   the `${project_name}-cicd-deploy-role` (available after first apply — you'll
-   need to bootstrap this role manually or via local apply the first time).
-
-## Terraform Commands
+### 1. Configure Input Variables
+Copy the example variables file and update it with your configuration:
 
 ```bash
-terraform init                 # downloads providers, configures backend
-terraform fmt -recursive       # auto-format all files
-terraform validate             # syntax/type checking
-terraform plan -out=tfplan     # preview changes
-terraform apply tfplan         # apply the reviewed plan
-terraform destroy              # tear down everything (careful — RDS has deletion_protection = true, disable first)
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-## Deployment Guide
+### 2. Initialize & Deploy Infrastructure
+```bash
+terraform init                 # Initialize providers and configure remote S3 state backend
+terraform fmt -recursive       # Format code files
+terraform validate             # Validate Terraform syntax
+terraform plan -out=tfplan     # Preview planned infrastructure resources
+terraform apply tfplan         # Provision infrastructure on AWS
+```
 
-1. First deployment must be run **locally** (not via CI/CD) since the CI/CD
-   deploy role doesn't exist yet — classic bootstrap problem.
-2. `terraform apply` locally to create the base infrastructure including the
-   IAM deployment role.
-3. Add the deploy role ARN to GitHub Secrets.
-4. From then on, every push to `main` runs `validate → plan → apply`
-   automatically. PRs get a plan posted as a comment for review before merge.
-5. Application code deployment (onto the already-running EC2 fleet) is out of
-   scope here — pair this with SSM Run Command, CodeDeploy, or a container
-   pipeline once the app team defines their build artifact.
+### 3. Deploy Application Code onto EC2 Fleet
+Deploy the FastAPI application code to running EC2 instances via AWS Systems Manager (SSM):
 
-## Security Checklist
+```bash
+python deploy.py
+```
 
-- [X] IAM least privilege — scoped policies per role, not `*` wildcards (except the CI/CD role, flagged as a known gap — see Next Steps)
-- [X] No hardcoded secrets — DB password is `random_password`-generated and stored in Secrets Manager
-- [X] Security groups form a strict chain: internet → ALB only; EC2 accepts only from ALB; RDS accepts only from EC2
-- [X] RDS `publicly_accessible = false`, deployed only in private DB subnets with no internet route
-- [X] HTTPS enforced at the ALB listener (HTTP redirects to HTTPS); S3 bucket policy denies non-TLS requests
-- [X] EBS and RDS storage encrypted at rest
-- [X] IMDSv2 enforced on EC2 (`http_tokens = "required"`) — blocks a common SSRF-to-credential-theft path
-- [X] No SSH port 22 open anywhere — access via SSM Session Manager only
-- [X] S3 public access blocked at the bucket level
+This script:
+1. Automatically discovers active EC2 instances in `shopnaija-asg`.
+2. Packages the `app/` folder into a release tarball and uploads it to S3.
+3. Uses SSM Run Command to install dependencies, run `seed.py`, and start Uvicorn securely without opening SSH Port 22.
 
-## Cost Optimization Notes
+---
 
-| Decision                                               | Reasoning                                                                                                                    |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| `t3.medium` for EC2/RDS                              | Burstable instance family — cheap baseline, bursts under promo traffic without paying for constant peak capacity            |
-| Single NAT Gateway (default)                           | Saves ~$35/mo vs. one per AZ; documented availability tradeoff, flip`single_nat_gateway = false` once traffic justifies it |
-| S3 lifecycle: Standard → IA (30d) → Glacier IR (90d) | Product images are rarely re-accessed after the first month; no reason to pay Standard rates indefinitely                    |
-| ASG target tracking on CPU (60%)                       | Scale before saturation, scale in during quiet hours — avoids paying for idle peak-sized capacity 24/7                      |
-| RDS storage autoscaling (max 100GB)                    | Avoids both manual resize firefights and over-provisioning storage upfront                                                   |
-| Lambda memory right-sized (256MB)                      | Thumbnailing is not compute-heavy; over-allocating memory just inflates the per-ms cost                                      |
-| API Gateway usage plan + throttling                    | Caps cost exposure from abuse or retry storms                                                                                |
-| CloudWatch Logs retention (30 days)                    | Logs aren't kept forever by default — unbounded log retention is a classic silent cost leak                                 |
+## 🔒 Security Architecture Highlights
 
-## Disaster Recovery
+- **Zero Open SSH Ports**: EC2 instances reside in private subnets with no public IPs. Management is performed via AWS Systems Manager (SSM) Session Manager and Run Command.
+- **Strict Security Group Chaining**: 
+  - `ALB SG` accepts 80/443 from `0.0.0.0/0`.
+  - `EC2 SG` accepts 8080 **only** from `ALB SG`.
+  - `RDS SG` accepts 5432 **only** from `EC2 SG`.
+- **Dynamic Secret Management**: Database credentials are randomly generated via `random_password` and stored in **AWS Secrets Manager**. EC2 fetches secrets dynamically at startup via IAM roles.
+- **Private S3 Media Storage**: The S3 uploads bucket is 100% private (`block_public_access`). Public media requests must pass through **CloudFront CDN** via **Origin Access Control (OAC)** with SigV4 signing.
+- **IMDSv2 Enforced**: EC2 instances require Instance Metadata Service Version 2 (`http_tokens = "required"`), mitigating SSRF risks.
+- **Enforced Encryption**: Storage is encrypted at rest (EBS, RDS, S3) and in transit (HTTPS, TLS 1.2/1.3, S3 `aws:SecureTransport` policy).
 
-- **RDS**: automated backups (7-day retention, configurable), Multi-AZ failover, final snapshot on deletion
-- **S3**: versioning enabled — accidental delete/overwrite is recoverable
-- **Infrastructure**: entirely defined in Terraform — a full environment can be recreated in a new account/region by re-running `terraform apply` against the same state config (excluding data, which restores from RDS snapshot / S3 versions)
+---
 
-## Known Gaps / Next Steps
+## 📊 Monitoring & Alerts
 
-Being upfront about what's simplified for this deliverable vs. what a longer
-production hardening pass would address:
+Amazon CloudWatch monitors system metrics and publishes alarms to an **Amazon SNS** topic (`shopnaija-alerts`), sending instant email notifications for:
+- **EC2 Fleet High CPU**: CPU average > 80% for 10 mins.
+- **Unhealthy Instances**: Healthy host count drops below 2.
+- **Low Disk Space**: Instance disk usage > 85%.
+- **RDS Database CPU**: PostgreSQL CPU > 75% for 10 mins.
+- **RDS Storage Low**: Free database storage < 2 GB.
 
-- **CloudFront** not wired in yet (listed as bonus in the brief) — would sit in front of the ALB for edge caching and DDoS absorption via AWS Shield Standard.
-- **ACM certificate** in `compute/main.tf` uses a placeholder domain — swap in `var.domain_name` and complete DNS validation once the real domain is live.
-- **CI/CD deploy role** currently uses `PowerUserAccess` — fine to get moving, but should be replaced with a custom policy scoped to exactly the resource types this project touches before this goes fully hands-off.
-- **API Gateway authorization** is a basic API key — swap for Cognito or a Lambda authorizer if this becomes a customer-facing API rather than an internal trigger.
-- **WAF** not included — worth adding in front of CloudFront/ALB for common web exploit protection (SQLi, XSS patterns) given this is e-commerce.
-- **GuardDuty / Security Hub** not included — recommend enabling account-wide regardless of this project for baseline threat detection.
+---
 
-## Challenges Encountered (fill in during actual deployment)
+## 💡 Cost Optimization Features
 
-Document real issues you hit here as you provision this for real — AZ
-capacity issues, IAM policy debugging, RDS parameter group tuning, etc. This
-section is meant to be honest and specific once you've run it, not
-theoretical.
+- **Single NAT Gateway**: Configurable via `single_nat_gateway = true` for cost savings in development/staging.
+- **S3 Automated Lifecycle Rules**:
+  - `0–30 Days`: S3 Standard.
+  - `30 Days`: Transitions to `STANDARD_IA` (~40% cost reduction).
+  - `90 Days`: Transitions to `GLACIER_IR` (~68% cost reduction).
+- **Target Tracking Auto Scaling**: Scales EC2 instances dynamically based on CPU demand (Min 2, Max 6), scaling in during off-peak hours.
+- **Lambda Memory Optimization**: Right-sized at 256MB for thumbnail generation to eliminate over-provisioned execution costs.
 
-## Lessons Learned (fill in during actual deployment)
+---
+
+## 🔄 Teardown
+
+To destroy all provisioned resources cleanly:
+
+```bash
+# 1. Destroy AWS resources via Terraform:
+terraform destroy -auto-approve
+
+# 2. Clean up remote state bucket (optional):
+bash remove-backend-bucket.sh
+```
+
 
 Same — capture what surprised you, what you'd do differently next time
 (e.g., NAT Gateway cost, RDS Multi-AZ failover behavior you tested, etc.)

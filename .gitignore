@@ -53,5 +53,5 @@ Thumbs.db
 # ==========================================
 # Bootstrap / Teardown Helper Scripts (Local)
 # ==========================================
-backend12.sh
-rmbackend.sh
+backend-bucket.sh
+remove-backend-bucket.sh
