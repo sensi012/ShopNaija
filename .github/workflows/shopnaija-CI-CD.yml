@@ -73,9 +73,10 @@ jobs:
 
       # AWS OIDC Authentication (No long-lived access keys required)
       - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
-          role-session-name: Github-action 
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          role-session-name: GitHubActionsSession
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Terraform Format Check
@@ -119,9 +120,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      #  AWS OIDC Authentication (No long-lived access keys required)
+      # AWS OIDC Authentication (No long-lived access keys required)
       - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsSession
