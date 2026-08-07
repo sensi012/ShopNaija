@@ -2,8 +2,7 @@
 # Networking
 # ------------------------------------------------------------------
 module "vpc" {
-  source = "./module/vpc"
-
+  source                   = "./module/vpc"
   project_name             = var.project_name
   vpc_cidr                 = var.vpc_cidr
   public_subnet_cidrs      = var.public_subnet_cidrs
@@ -17,8 +16,7 @@ module "vpc" {
 # Security Groups
 # ------------------------------------------------------------------
 module "security" {
-  source = "./module/security"
-
+  source       = "./module/security"
   project_name = var.project_name
   vpc_id       = module.vpc.vpc_id
 }
@@ -27,8 +25,7 @@ module "security" {
 # IAM Roles (least privilege)
 # ------------------------------------------------------------------
 module "iam" {
-  source = "./module/iam"
-
+  source        = "./module/iam"
   project_name  = var.project_name
   s3_bucket_arn = module.storage.bucket_arn
   db_secret_arn = module.database.secret_arn
@@ -40,8 +37,7 @@ module "iam" {
 # Storage (S3)
 # ------------------------------------------------------------------
 module "storage" {
-  source = "./module/storage"
-
+  source       = "./module/storage"
   project_name = var.project_name
 }
 

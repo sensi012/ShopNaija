@@ -133,11 +133,11 @@ data "aws_iam_policy_document" "deployment_assume" {
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    # Restrict to only your specific GitHub repo and branch
+    # Restrict to only your specific GitHub org and repo
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:sensi012/*"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
     }
   }
 }
