@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Checkout — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+  <h1 class="page-heading">Checkout</h1>
+
+  <div class="checkout-layout">
+
+    <!-- Shipping Form -->
+    <div class="checkout-form-wrap">
+      <h2 class="checkout-section-title">📦 Delivery Information</h2>
+      <form method="post" action="/checkout" class="checkout-form" id="checkout-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="shipping_name">Full Name *</label>
+            <input type="text" id="shipping_name" name="shipping_name" required placeholder="e.g. Chidi Okonkwo" class="form-input" value="{{ current_user.full_name if current_user else '' }}">
+          </div>
+          <div class="form-group">
+            <label for="shipping_phone">Phone Number *</label>
+            <input type="tel" id="shipping_phone" name="shipping_phone" required placeholder="e.g. 08012345678" class="form-input" value="{{ current_user.phone if current_user and current_user.phone else '' }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="shipping_address">Delivery Address *</label>
+          <textarea id="shipping_address" name="shipping_address" required placeholder="House number, street name, area" class="form-input form-textarea" rows="3"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="shipping_city">City / Town *</label>
+            <input type="text" id="shipping_city" name="shipping_city" required placeholder="e.g. Lagos Island" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="shipping_state">State *</label>
+            <select id="shipping_state" name="shipping_state" required class="form-input form-select">
+              <option value="">Select State</option>
+              {% for state in [
+                "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno",
+                "Cross River","Delta","Ebonyi","Edo","Ekiti","Enugu","FCT - Abuja","Gombe",
+                "Imo","Jigawa","Kaduna","Kano","Katsina","Kebbi","Kogi","Kwara","Lagos",
+                "Nasarawa","Niger","Ogun","Ondo","Osun","Oyo","Plateau","Rivers","Sokoto",
+                "Taraba","Yobe","Zamfara"
+              ] %}
+              <option value="{{ state }}">{{ state }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg btn-full">Place Order →</button>
+      </form>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="checkout-summary">
+      <h2 class="checkout-section-title">🧾 Order Summary</h2>
+      <div class="checkout-items">
+        {% for item in items %}
+        <div class="checkout-item">
+          <div class="checkout-item-name">{{ item.product.name }}</div>
+          <div class="checkout-item-qty">× {{ item.quantity }}</div>
+          <div class="checkout-item-price">{{ (item.product.price * item.quantity) | naira }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>{{ subtotal | naira }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Shipping</span>
+        <span>{{ shipping | naira }}</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-row summary-total">
+        <strong>Total</strong>
+        <strong>{{ total | naira }}</strong>
+      </div>
+      <div class="checkout-payment-info">
+        <p>💳 Payment method: Bank Transfer / Card on Delivery</p>
+        <p>An invoice with payment details will be sent after order placement.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

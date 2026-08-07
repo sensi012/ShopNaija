@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ '%05d' % order.id }} — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+
+  {% if success %}
+  <div class="order-success-banner">
+    <div class="order-success-icon">🎉</div>
+    <div>
+      <h2>Order Placed Successfully!</h2>
+      <p>Thank you for shopping with ShopNaija. You'll receive a confirmation shortly.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="order-detail-header">
+    <div>
+      <h1 class="page-heading">Order #{{ '%05d' % order.id }}</h1>
+      <p class="order-date-text">Placed on {{ order.created_at.strftime('%A, %d %B %Y at %H:%M') }}</p>
+    </div>
+    <span class="order-status order-status-{{ order.status }} order-status-lg">{{ order.status.title() }}</span>
+  </div>
+
+  <div class="order-detail-layout">
+
+    <!-- Items -->
+    <div class="order-detail-items">
+      <h2 class="checkout-section-title">📦 Order Items</h2>
+      {% for item in order.items %}
+      <div class="order-detail-item">
+        <div class="order-detail-item-name">{{ item.product_name }}</div>
+        <div class="order-detail-item-qty">× {{ item.quantity }}</div>
+        <div class="order-detail-item-price">{{ (item.unit_price * item.quantity) | naira }}</div>
+      </div>
+      {% endfor %}
+      <div class="summary-divider"></div>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>{{ (order.total - 1500) | naira }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Shipping</span>
+        <span>₦1,500</span>
+      </div>
+      <div class="summary-row summary-total">
+        <strong>Total Paid</strong>
+        <strong>{{ order.total | naira }}</strong>
+      </div>
+    </div>
+
+    <!-- Shipping Info -->
+    <div class="order-detail-shipping">
+      <h2 class="checkout-section-title">📍 Delivery Address</h2>
+      <div class="shipping-detail-card">
+        <p><strong>{{ order.shipping_name }}</strong></p>
+        <p>{{ order.shipping_address }}</p>
+        <p>{{ order.shipping_city }}, {{ order.shipping_state }}</p>
+        <p>📞 {{ order.shipping_phone }}</p>
+      </div>
+
+      <h2 class="checkout-section-title mt-4">💳 Payment</h2>
+      <div class="shipping-detail-card">
+        <p>Payment Method: <strong>Bank Transfer / Card on Delivery</strong></p>
+        <p>Please transfer <strong>{{ order.total | naira }}</strong> to:</p>
+        <p>Bank: <strong>First Bank Nigeria</strong></p>
+        <p>Account: <strong>0123456789</strong></p>
+        <p>Name: <strong>ShopNaija Ltd</strong></p>
+        <p class="payment-ref">Reference: <strong>SN-{{ '%05d' % order.id }}</strong></p>
+      </div>
+
+      <div class="order-actions">
+        <a href="/orders" class="btn btn-outline">← Back to Orders</a>
+        <a href="/products" class="btn btn-primary">Continue Shopping</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

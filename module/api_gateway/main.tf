@@ -16,17 +16,17 @@ resource "aws_api_gateway_resource" "images" {
 resource "aws_api_gateway_method" "post_image" {
   rest_api_id   = aws_api_gateway_rest_api.main.id
   resource_id   = aws_api_gateway_resource.images.id
-  http_method    = "POST"
-  authorization  = "IAM" # IAM / Cognito is used as security, formerly "NONE",ask about though
+  http_method   = "POST"
+  authorization = "AWS_IAM" # AWS_IAM authorization
 }
 
 resource "aws_api_gateway_integration" "lambda" {
   rest_api_id             = aws_api_gateway_rest_api.main.id
   resource_id             = aws_api_gateway_resource.images.id
-  http_method              = aws_api_gateway_method.post_image.http_method
-  integration_http_method  = "POST"
-  type                     = "AWS_PROXY"
-  uri                      = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${var.lambda_function_arn}/invocations"
+  http_method             = aws_api_gateway_method.post_image.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = "arn:aws:apigateway:${data.aws_region.current.id}:lambda:path/2015-03-31/functions/${var.lambda_function_arn}/invocations"
 }
 
 resource "aws_lambda_permission" "apigw" {
@@ -89,4 +89,4 @@ resource "aws_api_gateway_usage_plan_key" "main" {
   usage_plan_id = aws_api_gateway_usage_plan.main.id
 }
 
-# data "aws_region" "current" {}
+data "aws_region" "current" {}

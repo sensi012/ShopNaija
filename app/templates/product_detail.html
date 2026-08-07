@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — ShopNaija{% endblock %}
+{% block meta_desc %}Buy {{ product.name }} for {{ product.price | naira }}. {{ product.description[:150] if product.description else '' }}{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a> /
+    <a href="/products">Products</a>
+    {% if product.category %}/ <a href="/products?category={{ product.category.slug }}">{{ product.category.name }}</a>{% endif %}
+    / <span>{{ product.name }}</span>
+  </nav>
+
+  <!-- Product Detail -->
+  <div class="product-detail-grid">
+
+    <!-- Image -->
+    <div class="product-detail-image-wrap">
+      {% if product.image_key %}
+      <img src="{{ product.image_key | image_url }}" alt="{{ product.name }}" class="product-detail-image" id="main-image">
+      {% else %}
+      <div class="product-detail-placeholder">
+        <span>{{ product.category.icon if product.category else '📦' }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="product-detail-info">
+      {% if product.category %}
+      <a href="/products?category={{ product.category.slug }}" class="product-category-link">
+        {{ product.category.icon }} {{ product.category.name }}
+      </a>
+      {% endif %}
+
+      <h1 class="product-detail-name">{{ product.name }}</h1>
+      <div class="product-detail-price">{{ product.price | naira }}</div>
+
+      <!-- Stock Badge -->
+      <div class="stock-status">
+        {% if product.stock > 10 %}
+        <span class="badge badge-success">✓ In Stock</span>
+        {% elif product.stock > 0 %}
+        <span class="badge badge-warning">⚠ Only {{ product.stock }} left</span>
+        {% else %}
+        <span class="badge badge-error">✕ Out of Stock</span>
+        {% endif %}
+      </div>
+
+      <!-- Description -->
+      {% if product.description %}
+      <div class="product-description">
+        <h3>Description</h3>
+        <p>{{ product.description }}</p>
+      </div>
+      {% endif %}
+
+      <!-- Add to Cart Form -->
+      {% if product.stock > 0 %}
+      <form method="post" action="/cart/add" class="add-to-cart-form">
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <div class="qty-row">
+          <label for="qty">Quantity</label>
+          <div class="qty-control">
+            <button type="button" class="qty-btn" id="qty-minus">−</button>
+            <input type="number" name="quantity" id="qty" value="1" min="1" max="{{ product.stock }}" class="qty-input">
+            <button type="button" class="qty-btn" id="qty-plus">+</button>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <button type="submit" class="btn btn-primary btn-lg btn-full">
+            🛒 Add to Cart
+          </button>
+          <a href="/cart" class="btn btn-outline btn-lg btn-full">View Cart</a>
+        </div>
+      </form>
+      {% else %}
+      <button class="btn btn-primary btn-lg btn-full" disabled>Out of Stock</button>
+      {% endif %}
+
+      <!-- Trust Badges -->
+      <div class="trust-badges">
+        <div class="trust-badge">🚚 <span>Nationwide Delivery</span></div>
+        <div class="trust-badge">🔒 <span>Secure Checkout</span></div>
+        <div class="trust-badge">↩️ <span>Easy Returns</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products -->
+  {% if related %}
+  <section class="section">
+    <div class="section-header">
+      <h2>You May Also Like</h2>
+      <a href="/products?category={{ product.category.slug if product.category else '' }}" class="section-link">See All →</a>
+    </div>
+    <div class="products-grid">
+      {% for p in related %}
+      <div class="product-card">
+        <a href="/products/{{ p.slug }}" class="product-img-wrap">
+          {% if p.image_key %}
+          <img src="{{ p.image_key | image_url }}" alt="{{ p.name }}" class="product-img" loading="lazy">
+          {% else %}
+          <div class="product-img-placeholder"><span>{{ p.category.icon if p.category else '📦' }}</span></div>
+          {% endif %}
+        </a>
+        <div class="product-info">
+          <h3 class="product-name"><a href="/products/{{ p.slug }}">{{ p.name }}</a></h3>
+          <div class="product-footer">
+            <span class="product-price">{{ p.price | naira }}</span>
+            <form method="post" action="/cart/add">
+              <input type="hidden" name="product_id" value="{{ p.id }}">
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn-add-cart">Add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const qtyInput = document.getElementById('qty');
+const max = parseInt(qtyInput?.max || 99);
+document.getElementById('qty-minus')?.addEventListener('click', () => {
+  const v = parseInt(qtyInput.value);
+  if (v > 1) qtyInput.value = v - 1;
+});
+document.getElementById('qty-plus')?.addEventListener('click', () => {
+  const v = parseInt(qtyInput.value);
+  if (v < max) qtyInput.value = v + 1;
+});
+</script>
+{% endblock %}

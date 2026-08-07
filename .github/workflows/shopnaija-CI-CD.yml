@@ -1,0 +1,150 @@
+name: ShopNaija CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-1
+  PROJECT_NAME: shopnaija
+
+jobs:
+
+  # Job 1: Test & Lint Python FastAPI Application
+  
+  test-app:
+    name: Test Application Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install App Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r app/requirements.txt
+          pip install flake8 pytest
+
+      - name: Lint Application Code
+        run: |
+          # Stop build if there are Python syntax errors or undefined names
+          flake8 app --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings
+          flake8 app --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Check Syntax of App Files
+        run: |
+          python -m py_compile app/main.py
+          python -m py_compile app/config.py
+          python -m py_compile app/database.py
+          python -m py_compile app/seed.py
+
+  # ------------------------------------------------------------------
+  # Job 2: Validate & Plan Terraform Infrastructure
+  # ------------------------------------------------------------------
+  terraform-ci:
+    name: 🏗️ Terraform Init, Validate & Plan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Create Dummy tfvars if Missing
+        run: |
+          if [ ! -f terraform.tfvars ]; then
+            cp terraform.tfvars.example terraform.tfvars
+          fi
+
+      - name: Terraform Plan
+        run: terraform plan -no-color
+
+  # ------------------------------------------------------------------
+  # Job 3: Deploy Infrastructure & Code to AWS (Main Branch Only)
+  # ------------------------------------------------------------------
+  deploy:
+    name: 🚀 Deploy Infrastructure & Application
+    needs: [test-app, terraform-ci]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.0"
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create Production tfvars
+        run: |
+          if [ ! -f terraform.tfvars ]; then
+            cp terraform.tfvars.example terraform.tfvars
+          fi
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      - name: Install Deploy Script Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3
+
+      - name: Execute App Deployment Script
+        run: python deploy.py
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          PROJECT_NAME: ${{ env.PROJECT_NAME }}

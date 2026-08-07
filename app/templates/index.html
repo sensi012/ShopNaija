@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}ShopNaija — Shop Quality Nigerian Products{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ──────────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-content">
+    <div class="hero-text">
+      <span class="hero-tag">🇳🇬 Nigeria's #1 Online Store</span>
+      <h1 class="hero-title">Shop The Best<br><span class="hero-title-accent">Of Nigeria</span></h1>
+      <p class="hero-sub">Quality products from authentic Nigerian brands and sellers — delivered directly to your door, anywhere in Nigeria.</p>
+      <div class="hero-actions">
+        <a href="/products" class="btn btn-accent btn-lg">Shop Now →</a>
+        <a href="/register" class="btn btn-outline-white btn-lg">Join Free</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><strong>10K+</strong><span>Products</span></div>
+        <div class="hero-stat"><strong>50K+</strong><span>Customers</span></div>
+        <div class="hero-stat"><strong>36</strong><span>States Served</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card hero-card-1">
+        <div class="hero-card-emoji">👗</div>
+        <div>Fashion</div>
+      </div>
+      <div class="hero-card hero-card-2">
+        <div class="hero-card-emoji">📱</div>
+        <div>Electronics</div>
+      </div>
+      <div class="hero-card hero-card-3">
+        <div class="hero-card-emoji">🛒</div>
+        <div>Groceries</div>
+      </div>
+      <div class="hero-ring"></div>
+    </div>
+  </div>
+  <div class="hero-wave">
+    <svg viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0,40 C300,80 900,0 1200,40 L1200,80 L0,80 Z" fill="#f5f7f5"/></svg>
+  </div>
+</section>
+
+<!-- ── Categories ─────────────────────────────────────────────────────── -->
+<section class="section categories-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Shop by Category</h2>
+      <a href="/products" class="section-link">View All →</a>
+    </div>
+    <div class="categories-grid">
+      {% for cat in categories %}
+      <a href="/products?category={{ cat.slug }}" class="category-card" style="--cat-index: {{ loop.index }}">
+        <div class="category-icon">{{ cat.icon }}</div>
+        <span class="category-name">{{ cat.name }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── Featured Products ──────────────────────────────────────────────── -->
+<section class="section featured-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Featured Products</h2>
+      <a href="/products" class="section-link">See All →</a>
+    </div>
+    <div class="products-grid">
+      {% for product in featured %}
+      <div class="product-card">
+        <a href="/products/{{ product.slug }}" class="product-img-wrap">
+          {% if product.image_key %}
+          <img src="{{ product.image_key | image_url }}" alt="{{ product.name }}" class="product-img" loading="lazy">
+          {% else %}
+          <div class="product-img-placeholder">
+            <span>{{ product.category.icon if product.category else '📦' }}</span>
+          </div>
+          {% endif %}
+          {% if product.stock <= 5 and product.stock > 0 %}
+          <span class="product-badge badge-low">Only {{ product.stock }} left!</span>
+          {% endif %}
+        </a>
+        <div class="product-info">
+          {% if product.category %}
+          <span class="product-category">{{ product.category.name }}</span>
+          {% endif %}
+          <h3 class="product-name">
+            <a href="/products/{{ product.slug }}">{{ product.name }}</a>
+          </h3>
+          <div class="product-footer">
+            <span class="product-price">{{ product.price | naira }}</span>
+            <form method="post" action="/cart/add">
+              <input type="hidden" name="product_id" value="{{ product.id }}">
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn-add-cart" title="Add to cart">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                Add
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── Promo Banner ───────────────────────────────────────────────────── -->
+<section class="promo-banner">
+  <div class="container promo-inner">
+    <div class="promo-text">
+      <h2>🎉 New Customer Offer</h2>
+      <p>Register today and get free delivery on your first order, no minimum spend required!</p>
+      <a href="/register" class="btn btn-white btn-md">Create Free Account</a>
+    </div>
+    <div class="promo-visual">🛍️</div>
+  </div>
+</section>
+
+<!-- ── Why ShopNaija ──────────────────────────────────────────────────── -->
+<section class="section why-section">
+  <div class="container">
+    <h2 class="text-center">Why Shop With Us?</h2>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon">🚚</div>
+        <h3>Fast Delivery</h3>
+        <p>Nationwide delivery to all 36 states. Express delivery available in Lagos and Abuja.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🔒</div>
+        <h3>Secure Payments</h3>
+        <p>Bank transfer, card, and USSD payment options. Your data is always protected.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">✅</div>
+        <h3>Authentic Products</h3>
+        <p>All products are verified by our team. 100% genuine or your money back.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">📞</div>
+        <h3>24/7 Support</h3>
+        <p>Our customer service team is always available to help via WhatsApp and phone.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

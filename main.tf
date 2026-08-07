@@ -10,7 +10,7 @@ module "vpc" {
   private_app_subnet_cidrs = var.private_app_subnet_cidrs
   private_db_subnet_cidrs  = var.private_db_subnet_cidrs
   availability_zones       = var.availability_zones
-  single_nat_gateway        = var.single_nat_gateway
+  single_nat_gateway       = var.single_nat_gateway
 }
 
 # ------------------------------------------------------------------
@@ -29,9 +29,9 @@ module "security" {
 module "iam" {
   source = "./module/iam"
 
-  project_name       = var.project_name
-  s3_bucket_arn      = module.storage.bucket_arn
-  db_secret_arn      = module.database.secret_arn
+  project_name  = var.project_name
+  s3_bucket_arn = module.storage.bucket_arn
+  db_secret_arn = module.database.secret_arn
 }
 
 # ------------------------------------------------------------------
@@ -49,16 +49,16 @@ module "storage" {
 module "database" {
   source = "./module/database"
 
-  project_name             = var.project_name
-  db_subnet_ids            = module.vpc.private_db_subnet_ids
-  db_security_group_id     = module.security.rds_sg_id
-  db_engine                = var.db_engine
-  db_engine_version        = var.db_engine_version
-  db_instance_class        = var.db_instance_class
-  db_name                  = var.db_name
-  db_username               = var.db_username
-  multi_az                 = var.db_multi_az
-  backup_retention_days    = var.db_backup_retention_days
+  project_name          = var.project_name
+  db_subnet_ids         = module.vpc.private_db_subnet_ids
+  db_security_group_id  = module.security.rds_sg_id
+  db_engine             = var.db_engine
+  db_engine_version     = var.db_engine_version
+  db_instance_class     = var.db_instance_class
+  db_name               = var.db_name
+  db_username           = var.db_username
+  multi_az              = var.db_multi_az
+  backup_retention_days = var.db_backup_retention_days
 }
 
 # ------------------------------------------------------------------
@@ -67,7 +67,7 @@ module "database" {
 module "compute" {
   source = "./module/compute"
 
-  project_name          = var.project_name
+  project_name           = var.project_name
   vpc_id                 = module.vpc.vpc_id
   public_subnet_ids      = module.vpc.public_subnet_ids
   private_app_subnet_ids = module.vpc.private_app_subnet_ids
@@ -79,6 +79,7 @@ module "compute" {
   asg_max_size           = var.asg_max_size
   asg_desired_capacity   = var.asg_desired_capacity
   db_secret_arn          = module.database.secret_arn
+  db_endpoint            = module.database.db_endpoint
   s3_bucket_name         = module.storage.bucket_name
 }
 
@@ -101,8 +102,8 @@ module "lambda" {
 module "api_gateway" {
   source = "./module/api_gateway"
 
-  project_name        = var.project_name
-  lambda_function_arn = module.lambda.function_arn
+  project_name         = var.project_name
+  lambda_function_arn  = module.lambda.function_arn
   lambda_function_name = module.lambda.function_name
 }
 
@@ -113,30 +114,55 @@ module "cdn" {
   source = "./module/cdn"
 
   project_name                   = var.project_name
-  alb_dns_name                    = module.compute.alb_dns_name
+  alb_dns_name                   = module.compute.alb_dns_name
   s3_bucket_regional_domain_name = module.storage.bucket_regional_domain_name
-  s3_bucket_id                    = module.storage.bucket_id
-  acm_certificate_arn             = aws_acm_certificate.cdn.arn
-  domain_aliases                   = var.domain_name != "" ? [var.domain_name] : []
+  s3_bucket_id                   = module.storage.bucket_id
+  acm_certificate_arn            = var.domain_name != "" ? aws_acm_certificate.cdn[0].arn : ""
+  domain_aliases                 = var.domain_name != "" ? [var.domain_name] : []
 }
 
-# resource "aws_acm_certificate" "cdn" {
-#   provider          = aws.us_east_1
-#   domain_name       = var.domain_name != "" ? var.domain_name : "cdn.example.com"
-#   validation_method = "DNS"
+resource "aws_acm_certificate" "cdn" {
+  count             = var.domain_name != "" ? 1 : 0
+  provider          = aws.us_east_1 # CloudFront requires ACM certs to be in us-east-1
+  domain_name       = var.domain_name
+  validation_method = "DNS"
 
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_s3_bucket_policy" "cloudfront_oac" {
+  bucket = module.storage.bucket_id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowCloudFrontServicePrincipalReadOnly"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        }
+        Action   = "s3:GetObject"
+        Resource = "${module.storage.bucket_arn}/*"
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = module.cdn.distribution_arn
+          }
+        }
+      }
+    ]
+  })
+}
 # ------------------------------------------------------------------
 # Monitoring (CloudWatch alarms + SNS)
 # ------------------------------------------------------------------
 module "monitoring" {
   source = "./module/monitoring"
 
-  project_name    = var.project_name
-  alert_email     = var.alert_email
-  asg_name        = module.compute.asg_name
-  db_instance_id  = module.database.db_instance_id
+  project_name   = var.project_name
+  alert_email    = var.alert_email
+  asg_name       = module.compute.asg_name
+  db_instance_id = module.database.db_instance_id
 }

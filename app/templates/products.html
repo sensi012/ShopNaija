@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}{{ "Search: " + q if q else "All Products" }} — ShopNaija{% endblock %}
+{% block meta_desc %}Browse {{ total }} products on ShopNaija. Filter by category, price and more.{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+  <div class="products-layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <aside class="filter-sidebar" id="filter-sidebar">
+      <div class="filter-header">
+        <h3>Filters</h3>
+        <button class="filter-close" id="filter-close">×</button>
+      </div>
+      <form method="get" action="/products" id="filter-form">
+        <input type="hidden" name="q" value="{{ q }}">
+
+        <!-- Category -->
+        <div class="filter-group">
+          <h4>Category</h4>
+          <ul class="filter-list">
+            <li>
+              <label class="filter-radio {% if not selected_category %}active{% endif %}">
+                <input type="radio" name="category" value="" {% if not selected_category %}checked{% endif %} onchange="this.form.submit()">
+                <span>All Categories</span>
+              </label>
+            </li>
+            {% for cat in categories %}
+            <li>
+              <label class="filter-radio {% if selected_category == cat.slug %}active{% endif %}">
+                <input type="radio" name="category" value="{{ cat.slug }}" {% if selected_category == cat.slug %}checked{% endif %} onchange="this.form.submit()">
+                <span>{{ cat.icon }} {{ cat.name }}</span>
+              </label>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <!-- Price Range -->
+        <div class="filter-group">
+          <h4>Price Range</h4>
+          <div class="price-inputs">
+            <div class="price-input-wrap">
+              <span class="price-prefix">₦</span>
+              <input type="number" name="min_price" placeholder="Min" value="{{ min_price if min_price else '' }}" class="price-input">
+            </div>
+            <span class="price-sep">—</span>
+            <div class="price-input-wrap">
+              <span class="price-prefix">₦</span>
+              <input type="number" name="max_price" placeholder="Max" value="{{ max_price if max_price else '' }}" class="price-input">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary mt-2">Apply</button>
+        </div>
+
+        <!-- Clear -->
+        {% if selected_category or min_price or max_price %}
+        <a href="/products{% if q %}?q={{ q }}{% endif %}" class="filter-clear">✕ Clear Filters</a>
+        {% endif %}
+      </form>
+    </aside>
+
+    <!-- ── Product Area ────────────────────────────────────────────── -->
+    <div class="products-main">
+
+      <!-- Toolbar -->
+      <div class="products-toolbar">
+        <div class="products-count">
+          {% if q %}
+          <h1 class="search-heading">Results for "<em>{{ q }}</em>"</h1>
+          {% else %}
+          <h1 class="page-heading">
+            {% if selected_category %}{{ categories|selectattr('slug', 'eq', selected_category)|first|attr('name') }}{% else %}All Products{% endif %}
+          </h1>
+          {% endif %}
+          <span class="product-count-badge">{{ total }} product{{ 's' if total != 1 }}</span>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-sm btn-outline" id="filter-toggle">⚙️ Filters</button>
+          <div class="sort-wrap">
+            <label for="sort-select" class="sr-only">Sort by</label>
+            <select id="sort-select" name="sort" form="filter-form" onchange="document.getElementById('filter-form').submit()" class="sort-select">
+              <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+              <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low → High</option>
+              <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: High → Low</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      {% if products %}
+      <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card">
+          <a href="/products/{{ product.slug }}" class="product-img-wrap">
+            {% if product.image_key %}
+            <img src="{{ product.image_key | image_url }}" alt="{{ product.name }}" class="product-img" loading="lazy">
+            {% else %}
+            <div class="product-img-placeholder">
+              <span>{{ product.category.icon if product.category else '📦' }}</span>
+            </div>
+            {% endif %}
+            {% if product.stock <= 5 %}
+            <span class="product-badge badge-low">{{ product.stock }} left!</span>
+            {% endif %}
+          </a>
+          <div class="product-info">
+            {% if product.category %}
+            <span class="product-category">{{ product.category.name }}</span>
+            {% endif %}
+            <h2 class="product-name">
+              <a href="/products/{{ product.slug }}">{{ product.name }}</a>
+            </h2>
+            <div class="product-footer">
+              <span class="product-price">{{ product.price | naira }}</span>
+              <form method="post" action="/cart/add">
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="btn-add-cart">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                  Add
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if total_pages > 1 %}
+      <div class="pagination">
+        {% if page > 1 %}
+        <a href="?q={{ q }}&category={{ selected_category }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}&page={{ page - 1 }}" class="page-btn">← Prev</a>
+        {% endif %}
+        {% for p in range(1, total_pages + 1) %}
+        <a href="?q={{ q }}&category={{ selected_category }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}&page={{ p }}" class="page-btn {% if p == page %}page-btn-active{% endif %}">{{ p }}</a>
+        {% endfor %}
+        {% if page < total_pages %}
+        <a href="?q={{ q }}&category={{ selected_category }}&min_price={{ min_price }}&max_price={{ max_price }}&sort={{ sort }}&page={{ page + 1 }}" class="page-btn">Next →</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h2>No products found</h2>
+        <p>Try adjusting your search or filters.</p>
+        <a href="/products" class="btn btn-primary">Browse All Products</a>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,16 +1,57 @@
+# ==========================================
 # Terraform
+# ==========================================
 **/.terraform/*
 *.tfstate
 *.tfstate.*
+crash.log
+crash.*.log
 *.tfvars
+!terraform.tfvars.example
+*.tfplan
+tfplan
 .terraform.lock.hcl
 
-# Lambda build artifacts
+# ==========================================
+# Python & Environment
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# ==========================================
+# Deployment Artifacts & Logs
+# ==========================================
+*.log
+*.tar.gz
+*.zip
+console.log
+console_new.log
+health_resp.txt
+log_out.txt
+
+# ==========================================
+# Lambda Build Output
+# ==========================================
 modules/lambda/build/
+module/lambda/build/
 
-# OS/editor
+# ==========================================
+# Editor & OS Temp Files
+# ==========================================
 .DS_Store
+Thumbs.db
 *.swp
+.idea/
+.vscode/
 
-# backend.sh
+# ==========================================
+# Bootstrap / Teardown Helper Scripts (Local)
+# ==========================================
 backend12.sh
+rmbackend.sh

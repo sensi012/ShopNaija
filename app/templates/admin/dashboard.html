@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-title">⚙️ Admin</div>
+    <nav class="admin-nav">
+      <a href="/admin" class="admin-nav-link active">📊 Dashboard</a>
+      <a href="/admin/products/new" class="admin-nav-link">➕ Add Product</a>
+      <a href="/products" class="admin-nav-link">🛒 View Store</a>
+      <a href="/logout" class="admin-nav-link admin-logout">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Admin Main -->
+  <div class="admin-main">
+    {% set msg = request.query_params.get('msg') %}
+    {% if msg %}
+    <div class="alert alert-success">✓ {{ msg }}</div>
+    {% endif %}
+
+    <!-- Stats -->
+    <div class="admin-stats">
+      <div class="stat-card stat-green">
+        <div class="stat-value">{{ products|length }}</div>
+        <div class="stat-label">Products</div>
+      </div>
+      <div class="stat-card stat-blue">
+        <div class="stat-value">{{ total_orders }}</div>
+        <div class="stat-label">Total Orders</div>
+      </div>
+      <div class="stat-card stat-purple">
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Customers</div>
+      </div>
+      <div class="stat-card stat-gold">
+        <div class="stat-value">{{ revenue | naira }}</div>
+        <div class="stat-label">Revenue</div>
+      </div>
+    </div>
+
+    <!-- Add Category -->
+    <div class="admin-card">
+      <h2>Add Category</h2>
+      <form method="post" action="/admin/categories/new" class="admin-inline-form">
+        <input type="text" name="name" placeholder="Category name" required class="form-input">
+        <input type="text" name="icon" placeholder="Icon emoji" value="📦" class="form-input form-input-sm">
+        <button type="submit" class="btn btn-sm btn-primary">Add</button>
+      </form>
+      <div class="category-chips">
+        {% for cat in categories %}
+        <span class="category-chip">{{ cat.icon }} {{ cat.name }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h2>Products ({{ products|length }})</h2>
+        <a href="/admin/products/new" class="btn btn-sm btn-primary">+ Add Product</a>
+      </div>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Featured</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in products %}
+            <tr>
+              <td>
+                <div class="table-product-name">{{ p.name }}</div>
+                <div class="table-product-slug">{{ p.slug }}</div>
+              </td>
+              <td>{{ p.category.name if p.category else '—' }}</td>
+              <td>{{ p.price | naira }}</td>
+              <td>
+                <span class="stock-badge {% if p.stock == 0 %}stock-out{% elif p.stock <= 5 %}stock-low{% else %}stock-ok{% endif %}">
+                  {{ p.stock }}
+                </span>
+              </td>
+              <td>{{ '⭐' if p.featured else '—' }}</td>
+              <td>
+                <div class="table-actions">
+                  <a href="/admin/products/{{ p.id }}/edit" class="btn btn-xs btn-outline">Edit</a>
+                  <form method="post" action="/admin/products/{{ p.id }}/delete" onsubmit="return confirm('Delete {{ p.name }}?')">
+                    <button type="submit" class="btn btn-xs btn-danger">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="admin-card">
+      <h2>Recent Orders</h2>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr>
+              <td><a href="/orders/{{ order.id }}">#{{ '%05d' % order.id }}</a></td>
+              <td>{{ order.user.full_name }}</td>
+              <td>{{ order.total | naira }}</td>
+              <td><span class="order-status order-status-{{ order.status }}">{{ order.status.title() }}</span></td>
+              <td>{{ order.created_at.strftime('%d %b %Y') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -21,11 +21,18 @@ resource "aws_db_instance" "main" {
   multi_az = var.multi_az
 
   backup_retention_period = var.backup_retention_days
-  backup_window            = "02:00-03:00" # low-traffic window, WAT-adjacent
-  maintenance_window        = "sun:03:30-sun:04:30"
+  backup_window           = "02:00-03:00" # low-traffic window, WAT-adjacent
+  maintenance_window      = "sun:03:30-sun:04:30"
 
-  deletion_protection      = true
-  skip_final_snapshot      = false
+  # Deletion protection:
+  # true  = AWS blocks deletion of the database instance (prevents accidental data loss in prod; causes `terraform destroy` to fail).
+  # false = Allows AWS and Terraform to delete the RDS database instance.
+  deletion_protection = false
+
+  # Final snapshot:
+  # false = Creates a final backup snapshot before deleting (requires a unique final_snapshot_identifier; fails if snapshot name already exists).
+  # true  = Destroys database immediately without creating a final backup snapshot.
+  skip_final_snapshot       = true
   final_snapshot_identifier = "${var.project_name}-db-final-snapshot"
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
@@ -44,7 +51,10 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   name        = "${var.project_name}/rds/credentials"
   description = "RDS master credentials for ${var.project_name}"
 
-  recovery_window_in_days = 7
+  # recovery_window_in_days:
+  # 7-30 = Retains deleted secret in recovery queue for N days (blocks recreating a secret with the same name).
+  # 0    = Force-deletes immediately on destroy without recovery window so `terraform apply` can recreate it without errors.
+  recovery_window_in_days = 0
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials" {

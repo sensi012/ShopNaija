@@ -4,7 +4,7 @@ data "aws_ami" "al2023" {
   owners      = ["amazon"]
 
   filter {
-    name   = "shop-naija"
+    name   = "name"
     values = ["al2023-ami-*-x86_64"]
   }
 }
@@ -22,7 +22,7 @@ resource "aws_launch_template" "app" {
   vpc_security_group_ids = [var.ec2_sg_id]
 
   metadata_options {
-    http_tokens   = "required" 
+    http_tokens   = "required"
     http_endpoint = "enabled"
   }
 
@@ -30,8 +30,8 @@ resource "aws_launch_template" "app" {
     device_name = "/dev/xvda"
     ebs {
       volume_size           = 20
-      volume_type            = "gp3"
-      encrypted              = true
+      volume_type           = "gp3"
+      encrypted             = true
       delete_on_termination = true
     }
   }
@@ -39,6 +39,7 @@ resource "aws_launch_template" "app" {
   user_data = base64encode(templatefile("${path.module}/user_data.sh.tpl", {
     project_name   = var.project_name
     db_secret_arn  = var.db_secret_arn
+    db_endpoint    = var.db_endpoint
     s3_bucket_name = var.s3_bucket_name
   }))
 
@@ -62,7 +63,10 @@ resource "aws_lb" "main" {
   security_groups    = [var.alb_sg_id]
   subnets            = var.public_subnet_ids
 
-  enable_deletion_protection = true
+  # Deletion protection:
+  # true  = Prevents accidental deletion of ALB via AWS API/Console/Terraform (causes `terraform destroy` to fail).
+  # false = Allows Terraform to destroy the ALB during teardown.
+  enable_deletion_protection = false
 
   tags = {
     Name = "${var.project_name}-alb"
@@ -90,8 +94,8 @@ resource "aws_lb_target_group" "app" {
 # HTTP listener redirects straight to HTTPS
 resource "aws_lb_listener" "http_redirect" {
   load_balancer_arn = aws_lb.main.arn
-  port               = 80
-  protocol           = "HTTP"
+  port              = 80
+  protocol          = "HTTP"
 
   default_action {
     type = "redirect"
@@ -105,10 +109,10 @@ resource "aws_lb_listener" "http_redirect" {
 
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
-  port               = 443
-  protocol           = "HTTPS"
-  ssl_policy         = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn    = aws_acm_certificate.app.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate.app.arn
 
   default_action {
     type             = "forward"
@@ -116,10 +120,32 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# Self-managed placeholder cert path via ACM (DNS validation requires the real domain to be live)
+# Self-signed certificate imported into ACM for immediate availability without DNS validation delay
+resource "tls_private_key" "app" {
+  algorithm = "RSA"
+  rsa_bits  = 2048
+}
+
+resource "tls_self_signed_cert" "app" {
+  private_key_pem = tls_private_key.app.private_key_pem
+
+  subject {
+    common_name  = "${var.project_name}.local"
+    organization = "ShopNaija"
+  }
+
+  validity_period_hours = 8760
+
+  allowed_uses = [
+    "key_encipherment",
+    "digital_signature",
+    "server_auth",
+  ]
+}
+
 resource "aws_acm_certificate" "app" {
-  domain_name       = "app.example.com" # replace with var.domain_name once the domain is ready
-  validation_method = "DNS"
+  private_key      = tls_private_key.app.private_key_pem
+  certificate_body = tls_self_signed_cert.app.cert_pem
 
   lifecycle {
     create_before_destroy = true
@@ -167,6 +193,6 @@ resource "aws_autoscaling_policy" "scale_out_cpu" {
     predefined_metric_specification {
       predefined_metric_type = "ASGAverageCPUUtilization"
     }
-    target_value = 60.0 
+    target_value = 60.0
   }
 }

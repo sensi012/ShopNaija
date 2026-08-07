@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}My Orders — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+  <h1 class="page-heading">My Orders</h1>
+
+  {% if orders %}
+  <div class="orders-list">
+    {% for order in orders %}
+    <a href="/orders/{{ order.id }}" class="order-card">
+      <div class="order-card-left">
+        <div class="order-id">#{{ '%05d' % order.id }}</div>
+        <div class="order-date">{{ order.created_at.strftime('%d %b %Y, %H:%M') }}</div>
+      </div>
+      <div class="order-card-mid">
+        <div class="order-items-preview">
+          {% for item in order.items[:3] %}
+          <span class="order-item-name">{{ item.product_name }}{% if not loop.last %}, {% endif %}</span>
+          {% endfor %}
+          {% if order.items|length > 3 %}
+          <span class="order-more">+{{ order.items|length - 3 }} more</span>
+          {% endif %}
+        </div>
+        <div class="order-shipping">📍 {{ order.shipping_city }}, {{ order.shipping_state }}</div>
+      </div>
+      <div class="order-card-right">
+        <div class="order-total">{{ order.total | naira }}</div>
+        <span class="order-status order-status-{{ order.status }}">{{ order.status.title() }}</span>
+      </div>
+      <div class="order-arrow">→</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📦</div>
+    <h2>No orders yet</h2>
+    <p>You haven't placed any orders. Start shopping and your orders will appear here.</p>
+    <a href="/products" class="btn btn-primary btn-lg">Start Shopping</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

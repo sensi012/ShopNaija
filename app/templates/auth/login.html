@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Login — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <a href="/" class="auth-logo"><span>Shop</span>Naija 🇳🇬</a>
+    </div>
+    <h1 class="auth-title">Welcome Back</h1>
+    <p class="auth-sub">Login to your ShopNaija account</p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login" class="auth-form">
+      <input type="hidden" name="next" value="{{ next_url or '/' }}">
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email" id="email" name="email" required
+          placeholder="you@example.com" class="form-input"
+          value="{{ email or '' }}" autocomplete="email"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          Password
+          <a href="#" class="label-link">Forgot password?</a>
+        </label>
+        <div class="password-wrap">
+          <input
+            type="password" id="password" name="password" required
+            placeholder="Your password" class="form-input"
+            autocomplete="current-password"
+          >
+          <button type="button" class="password-toggle" onclick="togglePwd(this)">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-full">Login →</button>
+    </form>
+
+    <p class="auth-switch">
+      Don't have an account? <a href="/register">Create one free</a>
+    </p>
+
+    <div class="auth-divider"><span>or continue as</span></div>
+    <a href="/products" class="btn btn-outline btn-full">Browse without an account</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function togglePwd(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+</script>
+{% endblock %}

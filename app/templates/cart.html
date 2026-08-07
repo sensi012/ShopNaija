@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}My Cart — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="container page-content">
+  <h1 class="page-heading">Shopping Cart
+    {% if items %}<span class="product-count-badge">{{ items|length }} item{{ 's' if items|length != 1 }}</span>{% endif %}
+  </h1>
+
+  {% if items %}
+  <div class="cart-layout">
+
+    <!-- Cart Items -->
+    <div class="cart-items">
+      {% for item in items %}
+      <div class="cart-item">
+        <div class="cart-item-img-wrap">
+          {% if item.product.image_key %}
+          <img src="{{ item.product.image_key | image_url }}" alt="{{ item.product.name }}" class="cart-item-img">
+          {% else %}
+          <div class="cart-item-placeholder">{{ item.product.category.icon if item.product.category else '📦' }}</div>
+          {% endif %}
+        </div>
+        <div class="cart-item-detail">
+          <a href="/products/{{ item.product.slug }}" class="cart-item-name">{{ item.product.name }}</a>
+          {% if item.product.category %}
+          <span class="cart-item-cat">{{ item.product.category.name }}</span>
+          {% endif %}
+          <span class="cart-item-unit">{{ item.product.price | naira }} each</span>
+        </div>
+        <div class="cart-item-qty">
+          <form method="post" action="/cart/update" class="qty-form">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            <div class="qty-control">
+              <button type="button" class="qty-btn" onclick="changeQty(this, -1)">−</button>
+              <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.product.stock }}" class="qty-input" onchange="this.form.submit()">
+              <button type="button" class="qty-btn" onclick="changeQty(this, 1)">+</button>
+            </div>
+          </form>
+        </div>
+        <div class="cart-item-subtotal">
+          {{ (item.product.price * item.quantity) | naira }}
+        </div>
+        <form method="post" action="/cart/remove" class="cart-remove-form">
+          <input type="hidden" name="item_id" value="{{ item.id }}">
+          <button type="submit" class="cart-remove-btn" title="Remove item">×</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Summary -->
+    <div class="cart-summary">
+      <h3>Order Summary</h3>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>{{ subtotal | naira }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Shipping</span>
+        <span class="shipping-note">Calculated at checkout</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-row summary-total">
+        <span>Estimated Total</span>
+        <span>{{ subtotal | naira }}</span>
+      </div>
+      <a href="/checkout" class="btn btn-primary btn-lg btn-full">Proceed to Checkout →</a>
+      <a href="/products" class="btn btn-outline btn-full mt-2">Continue Shopping</a>
+      <div class="summary-trust">
+        <span>🔒 Secure checkout</span>
+        <span>🚚 Fast delivery</span>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">🛒</div>
+    <h2>Your cart is empty</h2>
+    <p>Looks like you haven't added anything to your cart yet.</p>
+    <a href="/products" class="btn btn-primary btn-lg">Start Shopping</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function changeQty(btn, delta) {
+  const form = btn.closest('.qty-form');
+  const input = form.querySelector('input[name="quantity"]');
+  const newVal = parseInt(input.value) + delta;
+  const min = parseInt(input.min ?? 0);
+  const max = parseInt(input.max ?? 999);
+  if (newVal >= min && newVal <= max) {
+    input.value = newVal;
+    form.submit();
+  }
+}
+</script>
+{% endblock %}

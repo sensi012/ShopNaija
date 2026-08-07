@@ -5,13 +5,13 @@ resource "aws_cloudfront_origin_access_control" "s3" {
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
-# CF distribution
+# CloudFront distribution
 resource "aws_cloudfront_distribution" "main" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "${var.project_name} CDN - static assets + app origin"
   price_class     = "PriceClass_100"
-    aliases = var.domain_aliases
+  aliases         = var.domain_aliases
 
   # Origin 1: ALB (dynamic app traffic, not cached by default)
   origin {
@@ -20,9 +20,9 @@ resource "aws_cloudfront_distribution" "main" {
 
     custom_origin_config {
       http_port              = 8080
-      https_port              = 8443
-      origin_protocol_policy  = "https-only"
-      origin_ssl_protocols    = ["TLSv1.2"]
+      https_port             = 8443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
@@ -37,8 +37,8 @@ resource "aws_cloudfront_distribution" "main" {
   default_cache_behavior {
     target_origin_id       = "alb-origin"
     viewer_protocol_policy = "redirect-to-https"
-    allowed_methods         = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods           = ["GET", "HEAD"]
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
 
     # Dynamic app responses aren't cached - CloudFront just forwards, ALB decides
     cache_policy_id          = data.aws_cloudfront_cache_policy.disabled.id
@@ -47,23 +47,23 @@ resource "aws_cloudfront_distribution" "main" {
 
   # Static behavior: product images/uploads served from S3, cached
   ordered_cache_behavior {
-    path_pattern            = "/uploads/*"
-    target_origin_id        = "s3-origin"
-    viewer_protocol_policy  = "redirect-to-https"
-    allowed_methods          = ["GET", "HEAD"]
-    cached_methods            = ["GET", "HEAD"]
-    cache_policy_id           = data.aws_cloudfront_cache_policy.caching_optimized.id
-    compress                  = true
+    path_pattern           = "/uploads/*"
+    target_origin_id       = "s3-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
+    compress               = true
   }
 
   ordered_cache_behavior {
-    path_pattern            = "/processed/*"
-    target_origin_id        = "s3-origin"
-    viewer_protocol_policy  = "redirect-to-https"
-    allowed_methods          = ["GET", "HEAD"]
-    cached_methods            = ["GET", "HEAD"]
-    cache_policy_id           = data.aws_cloudfront_cache_policy.caching_optimized.id
-    compress                  = true
+    path_pattern           = "/processed/*"
+    target_origin_id       = "s3-origin"
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    cache_policy_id        = data.aws_cloudfront_cache_policy.caching_optimized.id
+    compress               = true
   }
 
   restrictions {
@@ -72,10 +72,20 @@ resource "aws_cloudfront_distribution" "main" {
     }
   }
 
-  viewer_certificate {
-    acm_certificate_arn      = var.acm_certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+  dynamic "viewer_certificate" {
+    for_each = var.acm_certificate_arn != "" ? [1] : []
+    content {
+      acm_certificate_arn      = var.acm_certificate_arn
+      ssl_support_method       = "sni-only"
+      minimum_protocol_version = "TLSv1.2_2021"
+    }
+  }
+
+  dynamic "viewer_certificate" {
+    for_each = var.acm_certificate_arn == "" ? [1] : []
+    content {
+      cloudfront_default_certificate = true
+    }
   }
 
   tags = {

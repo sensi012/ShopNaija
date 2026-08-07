@@ -6,6 +6,11 @@ resource "aws_s3_bucket" "app_bucket" {
   # S3 bucket names are globally unique - so random suffix avoids collisions across accounts
   bucket = "${var.project_name}-uploads-${random_id.bucket_suffix.hex}"
 
+  # force_destroy:
+  # false = AWS/Terraform will refuse to delete the bucket if it contains objects or versions (`BucketNotEmpty` error).
+  # true  = Automatically deletes all objects and versions inside the bucket so `terraform destroy` succeeds cleanly.
+  force_destroy = true
+
   tags = {
     Name = "${var.project_name}-uploads"
   }

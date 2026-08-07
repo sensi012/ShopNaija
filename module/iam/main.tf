@@ -66,30 +66,58 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_role.name
 }
 
-
-data "aws_iam_policy_document" "combined_bucket_policy" {
-  source_policy_documents = [module.storage.bucket_policy_json]
-
+# Lambda execution role
+data "aws_iam_policy_document" "lambda_assume" {
   statement {
-    sid       = "AllowCloudFrontServicePrincipalReadOnly"
-    effect    = "Allow"
-    actions   = ["s3:GetObject"]
-    resources = ["${module.storage.bucket_arn}/*"]
-
+    actions = ["sts:AssumeRole"]
     principals {
       type        = "Service"
-      identifiers = ["cloudfront.amazonaws.com"]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "AWS:SourceArn"
-      values   = [module.cdn.distribution_arn]
+      identifiers = ["lambda.amazonaws.com"]
     }
   }
 }
 
-resource "aws_s3_bucket_policy" "app_bucket" {
-  bucket = module.storage.bucket_id
-  policy = data.aws_iam_policy_document.combined_bucket_policy.json
+resource "aws_iam_role" "lambda_role" {
+  name               = "${var.project_name}-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_basic" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+data "aws_iam_policy_document" "lambda_s3_policy" {
+  statement {
+    sid       = "LambdaS3Access"
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = ["${var.s3_bucket_arn}/*"]
+  }
+  statement {
+    sid       = "LambdaSNSPublish"
+    actions   = ["sns:Publish"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "lambda_s3" {
+  name   = "${var.project_name}-lambda-policy"
+  role   = aws_iam_role.lambda_role.id
+  policy = data.aws_iam_policy_document.lambda_s3_policy.json
+}
+
+# Deployment role
+data "aws_iam_policy_document" "deployment_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "deployment_role" {
+  name               = "${var.project_name}-deployment-role"
+  assume_role_policy = data.aws_iam_policy_document.deployment_assume.json
 }

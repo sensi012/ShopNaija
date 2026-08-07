@@ -20,14 +20,14 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
   alarm_name          = "${var.project_name}-ec2-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name          = "CPUUtilization"
-  namespace            = "AWS/EC2"
-  period               = 300
-  statistic            = "Average"
-  threshold            = 80
-  alarm_description    = "EC2 fleet average CPU above 80% for 10 minutes"
-  alarm_actions        = [aws_sns_topic.alerts.arn]
-  ok_actions            = [aws_sns_topic.alerts.arn]
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/EC2"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 80
+  alarm_description   = "EC2 fleet average CPU above 80% for 10 minutes"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     AutoScalingGroupName = var.asg_name
@@ -39,14 +39,14 @@ resource "aws_cloudwatch_metric_alarm" "asg_unhealthy_hosts" {
   alarm_name          = "${var.project_name}-unhealthy-hosts"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name          = "GroupInServiceInstances"
-  namespace            = "AWS/AutoScaling"
-  period               = 120
-  statistic            = "Minimum"
-  threshold            = 1 # alert if in-service instance count drops to 1 or fewer (below safe redundancy)
-  alarm_description    = "Fewer than 2 healthy instances in service - redundancy at risk"
-  alarm_actions        = [aws_sns_topic.alerts.arn]
-  ok_actions            = [aws_sns_topic.alerts.arn]
+  metric_name         = "GroupInServiceInstances"
+  namespace           = "AWS/AutoScaling"
+  period              = 120
+  statistic           = "Minimum"
+  threshold           = 1 # alert if in-service instance count drops to 1 or fewer (below safe redundancy)
+  alarm_description   = "Fewer than 2 healthy instances in service - redundancy at risk"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     AutoScalingGroupName = var.asg_name
@@ -58,14 +58,14 @@ resource "aws_cloudwatch_metric_alarm" "disk_space_low" {
   alarm_name          = "${var.project_name}-disk-space-low"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
-  metric_name          = "disk_used_percent"
-  namespace            = "${var.project_name}/EC2"
-  period               = 300
-  statistic            = "Average"
-  threshold            = 85
-  alarm_description    = "Instance disk usage above 85%"
-  alarm_actions        = [aws_sns_topic.alerts.arn]
-  treat_missing_data   = "notBreaching"
+  metric_name         = "disk_used_percent"
+  namespace           = "${var.project_name}/EC2"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 85
+  alarm_description   = "Instance disk usage above 85%"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  treat_missing_data  = "notBreaching"
 }
 
 # ------------------------------------------------------------------
@@ -75,14 +75,14 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
   alarm_name          = "${var.project_name}-rds-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
-  metric_name          = "CPUUtilization"
-  namespace            = "AWS/RDS"
-  period               = 300
-  statistic            = "Average"
-  threshold            = 75
-  alarm_description    = "RDS CPU above 75% for 10 minutes - may indicate need for read replica or instance upsize"
-  alarm_actions        = [aws_sns_topic.alerts.arn]
-  ok_actions            = [aws_sns_topic.alerts.arn]
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 75
+  alarm_description   = "RDS CPU above 75% for 10 minutes - may indicate need for read replica or instance upsize"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     DBInstanceIdentifier = var.db_instance_id
@@ -93,13 +93,13 @@ resource "aws_cloudwatch_metric_alarm" "rds_low_storage" {
   alarm_name          = "${var.project_name}-rds-low-storage"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
-  metric_name          = "FreeStorageSpace"
-  namespace            = "AWS/RDS"
-  period               = 300
-  statistic            = "Average"
-  threshold            = 2000000000 # 2GB in bytes
-  alarm_description    = "RDS free storage below 2GB"
-  alarm_actions        = [aws_sns_topic.alerts.arn]
+  metric_name         = "FreeStorageSpace"
+  namespace           = "AWS/RDS"
+  period              = 300
+  statistic           = "Average"
+  threshold           = 2000000000 # 2GB in bytes
+  alarm_description   = "RDS free storage below 2GB"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
     DBInstanceIdentifier = var.db_instance_id

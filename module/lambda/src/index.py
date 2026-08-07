@@ -4,7 +4,11 @@ import os
 from io import BytesIO
 
 import boto3
-from PIL import Image
+try:
+    from PIL import Image
+    HAS_PIL = True
+except ImportError:
+    HAS_PIL = False
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -17,6 +21,9 @@ SIZES = {"thumbnail": (150, 150), "medium": (600, 600)}
 
 
 def handler(event, context):
+    if not HAS_PIL:
+        logger.error("PIL (Pillow) dependency is missing. Attach Pillow via a Lambda layer to process images.")
+        return {"statusCode": 500, "body": json.dumps({"error": "PIL dependency missing"})}
     for record in event["Records"]:
         bucket = record["s3"]["bucket"]["name"]
         key = record["s3"]["object"]["key"]

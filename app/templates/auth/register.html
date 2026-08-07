@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Create Account — ShopNaija{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <a href="/" class="auth-logo"><span>Shop</span>Naija 🇳🇬</a>
+    </div>
+    <h1 class="auth-title">Join ShopNaija</h1>
+    <p class="auth-sub">Create your free account and start shopping</p>
+
+    {% if errors %}
+    <div class="alert alert-error">
+      <ul class="error-list">
+        {% for err in errors %}<li>{{ err }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/register" class="auth-form">
+      <div class="form-group">
+        <label for="full_name">Full Name</label>
+        <input
+          type="text" id="full_name" name="full_name" required
+          placeholder="e.g. Amaka Okafor" class="form-input"
+          value="{{ full_name or '' }}" autocomplete="name"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email" id="email" name="email" required
+          placeholder="you@example.com" class="form-input"
+          value="{{ email or '' }}" autocomplete="email"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-wrap">
+          <input
+            type="password" id="password" name="password" required
+            placeholder="Minimum 6 characters" class="form-input"
+            autocomplete="new-password"
+          >
+          <button type="button" class="password-toggle" onclick="togglePwd(this)">👁</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <input
+          type="password" id="confirm_password" name="confirm_password" required
+          placeholder="Repeat your password" class="form-input"
+          autocomplete="new-password"
+        >
+      </div>
+
+      <div class="form-check">
+        <input type="checkbox" id="terms" name="terms" required class="checkbox">
+        <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-full">Create Account →</button>
+    </form>
+
+    <p class="auth-switch">
+      Already have an account? <a href="/login">Login here</a>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function togglePwd(btn) {
+  const input = btn.previousElementSibling;
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
+}
+</script>
+{% endblock %}

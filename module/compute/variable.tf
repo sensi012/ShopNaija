@@ -46,6 +46,11 @@ variable "db_secret_arn" {
   type = string
 }
 
+variable "db_endpoint" {
+  type      = string
+  sensitive = true
+}
+
 variable "s3_bucket_name" {
   type = string
 }

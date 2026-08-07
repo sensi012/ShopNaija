@@ -19,6 +19,7 @@ variable "s3_bucket_id" {
 variable "acm_certificate_arn" {
   description = "ACM cert ARN - MUST be in us-east-1, CloudFront requirement regardless of app region"
   type        = string
+  default     = ""
 }
 
 variable "domain_aliases" {
