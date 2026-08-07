@@ -50,10 +50,7 @@ jobs:
 
       - name: Check Syntax of App Files
         run: |
-          python -m py_compile app/main.py
-          python -m py_compile app/config.py
-          python -m py_compile app/database.py
-          python -m py_compile app/seed.py
+          python -m py_compile app/*.py
 
   # ------------------------------------------------------------------
   # Job 2: Validate & Plan Terraform Infrastructure
