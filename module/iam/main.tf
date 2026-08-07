@@ -113,6 +113,22 @@ resource "aws_iam_role_policy" "lambda_s3" {
 # Fetch the current AWS Account ID dynamically (avoids hardcoding)
 data "aws_caller_identity" "current" {}
 
+# Register the GitHub Actions OIDC provider in this AWS account.
+# This MUST exist before any GitHub Actions workflow can assume a role via OIDC.
+# It is safe to run this even if the provider already exists (data source below handles that).
+resource "aws_iam_openid_connect_provider" "github_actions" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = ["sts.amazonaws.com"]
+
+  # GitHub's OIDC thumbprint (stable - issued by DigiCert)
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+
+  tags = {
+    Name = "github-actions-oidc-provider"
+  }
+}
+
 data "aws_iam_policy_document" "deployment_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -126,7 +142,7 @@ data "aws_iam_policy_document" "deployment_assume" {
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
       type        = "Federated"
-      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:oidc-provider/token.actions.githubusercontent.com"]
+      identifiers = [aws_iam_openid_connect_provider.github_actions.arn]
     }
     condition {
       test     = "StringEquals"
@@ -145,4 +161,68 @@ data "aws_iam_policy_document" "deployment_assume" {
 resource "aws_iam_role" "deployment_role" {
   name               = "${var.project_name}-deployment-role"
   assume_role_policy = data.aws_iam_policy_document.deployment_assume.json
+}
+
+# Grant the deployment role enough permissions to run Terraform and deploy the app
+data "aws_iam_policy_document" "deployment_policy" {
+  statement {
+    sid    = "TerraformStateAccess"
+    effect = "Allow"
+    actions = [
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject",
+      "s3:ListBucket"
+    ]
+    resources = ["arn:aws:s3:::*shopnaija*", "arn:aws:s3:::*shopnaija*/*"]
+  }
+
+  statement {
+    sid    = "TerraformDynamoLock"
+    effect = "Allow"
+    actions = [
+      "dynamodb:GetItem",
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem"
+    ]
+    resources = ["arn:aws:dynamodb:*:${data.aws_caller_identity.current.account_id}:table/*shopnaija*"]
+  }
+
+  statement {
+    sid    = "SSMRunCommand"
+    effect = "Allow"
+    actions = [
+      "ssm:SendCommand",
+      "ssm:GetCommandInvocation",
+      "ssm:ListCommandInvocations"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "S3AppUpload"
+    effect = "Allow"
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:ListBucket"
+    ]
+    resources = [var.s3_bucket_arn, "${var.s3_bucket_arn}/*"]
+  }
+
+  statement {
+    sid    = "EC2DescribeForDeploy"
+    effect = "Allow"
+    actions = [
+      "ec2:DescribeInstances",
+      "autoscaling:DescribeAutoScalingGroups"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_role_policy" "deployment_policy" {
+  name   = "${var.project_name}-deployment-policy"
+  role   = aws_iam_role.deployment_role.id
+  policy = data.aws_iam_policy_document.deployment_policy.json
 }
