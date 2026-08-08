@@ -162,7 +162,7 @@ resource "aws_vpc_endpoint" "ssm" {
   service_name        = "com.amazonaws.${var.availability_zones[0] != "" ? "eu-west-1" : "eu-west-1"}.ssm"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private_app[*].id
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = {
@@ -175,7 +175,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
   service_name        = "com.amazonaws.eu-west-1.ssmmessages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private_app[*].id
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = {
@@ -188,7 +188,7 @@ resource "aws_vpc_endpoint" "ec2messages" {
   service_name        = "com.amazonaws.eu-west-1.ec2messages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private_app[*].id
-  security_group_ids = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
   tags = {

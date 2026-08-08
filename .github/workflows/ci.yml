@@ -73,15 +73,14 @@ jobs:
         with:
           terraform_version: "1.6.0"
 
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
       - name: Create Dummy tfvars if Missing
         run: |
           if [ ! -f terraform.tfvars ]; then
             cp terraform.tfvars.example terraform.tfvars
-            sed -i 's/@shopnaija.com/devops@shopnaija.com/g' terraform.tfvars
           fi
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
 
       # AWS OIDC Authentication (No long-lived access keys required)
       - name: Configure AWS Credentials via OIDC

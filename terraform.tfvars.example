@@ -5,15 +5,15 @@ project_name = "shopnaija"
 environment  = "production"
 aws_region   = "eu-west-1"
 
-alert_email = "@shopnaija.com"
+alert_email = "devops@shopnaija.com"
 domain_name = "shop.example.com"
 
 instance_type        = "t3.medium"
-asg_min_size          = 2
-asg_max_size          = 6
-asg_desired_capacity  = 2
+asg_min_size         = 2
+asg_max_size         = 6
+asg_desired_capacity = 2
 
-db_instance_class     = "db.t3.medium"
-db_multi_az           = true
+db_instance_class = "db.t3.medium"
+db_multi_az       = true
 
 single_nat_gateway = true
