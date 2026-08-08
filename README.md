@@ -91,7 +91,7 @@ secure, monitored AWS environment. Production-grade, highly available, auto-scal
 │   └── monitoring/                    # CloudWatch Metric Alarms (CPU, Memory, Disk) & SNS Topic
 │
 └── .github/workflows/
-    └── shopnaija-CI-CD.yml            # GitHub Actions CI/CD Pipeline (Lint, Validate, Apply, Deploy)
+    └── ci.yml                         # GitHub Actions CI/CD Pipeline (Lint, Validate, Apply, Deploy)
 ```
 
 ---

@@ -135,13 +135,13 @@ variable "tags" {
 
 # GitHub OIDC - used to scope which GitHub repo can assume the deployment role
 variable "github_org" {
-  description = "GitHub organisation or username (e.g. sensi012)"
+  description = "GitHub organisation or username"
   type        = string
   default     = "sensi012"
 }
 
 variable "github_repo" {
-  description = "GitHub repository name (e.g. ShopNaija)"
+  description = "GitHub repository name"
   type        = string
   default     = "*"
 }
