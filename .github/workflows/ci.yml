@@ -85,7 +85,7 @@ jobs:
       # AWS OIDC Authentication (No long-lived access keys required)
       - name: Configure AWS Credentials via OIDC
         if: ${{ env.AWS_ROLE_ARN != '' }}
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsSession
@@ -130,7 +130,7 @@ jobs:
           python-version: "3.12"
 
       - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsSession
