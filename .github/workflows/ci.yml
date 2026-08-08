@@ -90,7 +90,6 @@ jobs:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           role-session-name: GitHubActionsSession
           aws-region: ${{ env.AWS_REGION }}
-        
 
       - name: Terraform Init
         run: |
@@ -113,7 +112,7 @@ jobs:
   deploy:
     name: Deploy Infrastructure & Application
     needs: [test-app, terraform-ci]
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && env.AWS_ROLE_ARN != ''
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     steps:
