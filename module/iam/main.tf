@@ -113,20 +113,8 @@ resource "aws_iam_role_policy" "lambda_s3" {
 # Fetch the current AWS Account ID dynamically (avoids hardcoding)
 data "aws_caller_identity" "current" {}
 
-# Register the GitHub Actions OIDC provider in this AWS account.
-# This MUST exist before any GitHub Actions workflow can assume a role via OIDC.
-# It is safe to run this even if the provider already exists (data source below handles that).
-resource "aws_iam_openid_connect_provider" "github_actions" {
+data "aws_iam_openid_connect_provider" "github_actions" {
   url = "https://token.actions.githubusercontent.com"
-
-  client_id_list = ["sts.amazonaws.com"]
-
-  # GitHub's OIDC thumbprint (stable - issued by DigiCert)
-  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
-
-  tags = {
-    Name = "github-actions-oidc-provider"
-  }
 }
 
 data "aws_iam_policy_document" "deployment_assume" {
