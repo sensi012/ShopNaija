@@ -98,14 +98,15 @@ secure, monitored AWS environment. Production-grade, highly available, auto-scal
 
 ## 🛠️ Prerequisites
 
-- **Terraform** >= 1.6.0
+- **Terraform** >= 1.15.0
 - **AWS CLI** configured with administrator or deploy permissions
 - **Python** 3.12+ (for running `deploy.py` locally or in CI/CD)
 - An S3 bucket for Terraform remote state created before running `terraform init`:
 
 ```bash
-# Run the provided bootstrap script:
-bash backend-bucket.sh
+# Run the provided bootstrap script, or create it manually:
+aws s3api create-bucket --bucket shopnaija-bucket-terraform-state --region eu-west-1 --create-bucket-configuration LocationConstraint=eu-west-1
+aws s3api put-bucket-versioning --bucket shopnaija-bucket-terraform-state --versioning-configuration Status=Enabled
 ```
 
 ---
