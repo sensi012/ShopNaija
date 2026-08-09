@@ -146,16 +146,5 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-
-      - name: Install Deploy Script Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install boto3
-
-      - name: Execute App Deployment Script
-        run: python deploy.py
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          PROJECT_NAME: ${{ env.PROJECT_NAME }}
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
