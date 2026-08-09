@@ -109,42 +109,56 @@ jobs:
   # ------------------------------------------------------------------
   # Job 3: Deploy Infrastructure & Code to AWS (Main Branch Only)
   # ------------------------------------------------------------------
-  deploy:
-    name: Deploy Infrastructure & Application
-    needs: [test-app, terraform-ci]
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    runs-on: ubuntu-latest
+  # deploy:
+  #   name: Deploy Infrastructure & Application
+  #   needs: [test-app, terraform-ci]
+  #   if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.15.8"
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: "1.15.8"
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+  #     - name: Set up Python 3.12
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.12"
 
-      - name: Configure AWS Credentials via OIDC
-        uses: aws-actions/configure-aws-credentials@v6.2.3
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          role-session-name: GitHubActionsSession
-          aws-region: ${{ env.AWS_REGION }}
+  #     - name: Configure AWS Credentials via OIDC
+  #       uses: aws-actions/configure-aws-credentials@v6.2.3
+  #       with:
+  #         role-to-assume: ${{ env.AWS_ROLE_ARN }}
+  #         role-session-name: GitHubActionsSession
+  #         aws-region: ${{ env.AWS_REGION }}
 
-      - name: Create Production tfvars
-        run: |
-          if [ ! -f terraform.tfvars ]; then
-            cp terraform.tfvars.example terraform.tfvars
-            sed -i 's/@shopnaija.com/devops@shopnaija.com/g' terraform.tfvars
-          fi
+  #     - name: Create Production tfvars
+  #       run: |
+  #         if [ ! -f terraform.tfvars ]; then
+  #           cp terraform.tfvars.example terraform.tfvars
+  #           sed -i 's/@shopnaija.com/devops@shopnaija.com/g' terraform.tfvars
+  #         fi
 
-      - name: Terraform Init
-        run: terraform init
+  #     - name: Terraform Init
+  #       run: terraform init
 
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+  #     - name: Terraform Apply
+  #       run: terraform apply -auto-approve
+
+  #     - name: Install Deploy Script Dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install boto3
+
+  #     - name: Execute App Deployment Script
+  #       run: python deploy.py
+  #       env:
+  #         AWS_REGION: ${{ env.AWS_REGION }}
+  #         PROJECT_NAME: ${{ env.PROJECT_NAME }}
+
+  #     - name: Terraform Destroy
+  #       run: terraform destroy -auto-approve
