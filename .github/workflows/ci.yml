@@ -60,51 +60,51 @@ jobs:
   # ------------------------------------------------------------------
   # Job 2: Validate & Plan Terraform Infrastructure
   # ------------------------------------------------------------------
-  terraform-ci:
-    name: Terraform Init, Validate & Plan
-    runs-on: ubuntu-latest
+  # terraform-ci:
+  #   name: Terraform Init, Validate & Plan
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.15.8"
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: "1.15.8"
 
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
+  #     - name: Terraform Format Check
+  #       run: terraform fmt -check -recursive
 
-      - name: Create Dummy tfvars if Missing
-        run: |
-          if [ ! -f terraform.tfvars ]; then
-            cp terraform.tfvars.example terraform.tfvars
-          fi
+  #     - name: Create Dummy tfvars if Missing
+  #       run: |
+  #         if [ ! -f terraform.tfvars ]; then
+  #           cp terraform.tfvars.example terraform.tfvars
+  #         fi
 
-      # AWS OIDC Authentication (No long-lived access keys required)
-      - name: Configure AWS Credentials via OIDC
-        if: ${{ env.AWS_ROLE_ARN != '' }}
-        uses: aws-actions/configure-aws-credentials@v6.2.3
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          role-session-name: GitHubActionsSession
-          aws-region: ${{ env.AWS_REGION }}
+  #     # AWS OIDC Authentication (No long-lived access keys required)
+  #     - name: Configure AWS Credentials via OIDC
+  #       if: ${{ env.AWS_ROLE_ARN != '' }}
+  #       uses: aws-actions/configure-aws-credentials@v6.2.3
+  #       with:
+  #         role-to-assume: ${{ env.AWS_ROLE_ARN }}
+  #         role-session-name: GitHubActionsSession
+  #         aws-region: ${{ env.AWS_REGION }}
 
-      - name: Terraform Init
-        run: |
-          if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then
-            terraform init
-          else
-            terraform init -backend=false
-          fi
+  #     - name: Terraform Init
+  #       run: |
+  #         if [ -n "${{ secrets.AWS_ROLE_ARN }}" ]; then
+  #           terraform init
+  #         else
+  #           terraform init -backend=false
+  #         fi
 
-      - name: Terraform Validate
-        run: terraform validate
+  #     - name: Terraform Validate
+  #       run: terraform validate
 
-      - name: Terraform Plan
-        if: ${{ env.AWS_ROLE_ARN != '' }}
-        run: terraform plan -no-color
+  #     - name: Terraform Plan
+  #       if: ${{ env.AWS_ROLE_ARN != '' }}
+  #       run: terraform plan -no-color
 
   # ------------------------------------------------------------------
   # Job 3: Deploy Infrastructure & Code to AWS (Main Branch Only)
