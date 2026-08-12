@@ -55,3 +55,9 @@ Thumbs.db
 # ==========================================
 backend-bucket.sh
 remove-backend-bucket.sh
+
+# ===========================================
+# Others
+# ===========================================
+explain.txt
+resource-explain.txt
