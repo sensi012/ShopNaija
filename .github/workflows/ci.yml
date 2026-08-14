@@ -159,6 +159,3 @@ jobs:
   #       env:
   #         AWS_REGION: ${{ env.AWS_REGION }}
   #         PROJECT_NAME: ${{ env.PROJECT_NAME }}
-
-  #     - name: Terraform Destroy
-  #       run: terraform destroy -auto-approve
