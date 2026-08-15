@@ -27,9 +27,9 @@ secure, monitored AWS environment. Production-grade, highly available, auto-scal
                │ 2. Health Checked Traffic (Port 8080)
                ▼
 ┌───────────────────────────────────────────────────────────────────────────────────┐
-│ PRIVATE APPLICATION TIER (Multi-AZ EC2 Auto Scaling Group)                         │
+│ PRIVATE APPLICATION TIER (Multi-AZ EC2 Auto Scaling Group)                        │
 │                                                                                   │
-│   FastAPI Web App (Uvicorn)  ──>  SQLAlchemy  ──>  boto3 AWS SDK                 │
+│   FastAPI Web App (Uvicorn)  ──>  SQLAlchemy  ──>  boto3 AWS SDK                  │
 │   (Sourced env from /etc/environment)                                             │
 └──────────────┬─────────────────────────┬──────────────────────────┬───────────────┘
                │                         │                          │
