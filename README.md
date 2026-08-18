@@ -1,7 +1,40 @@
 # 🛒 ShopNaija — Production AWS Infrastructure & Full-Stack Application
 
-Infrastructure-as-code for migrating ShopNaija from a single VPS to a scalable,
-secure, monitored AWS environment. Production-grade, highly available, auto-scaling, and monitored AWS cloud infrastructure for **ShopNaija**, paired with a full-stack Python/FastAPI e-commerce application and automated continuous deployment.
+Production-grade, highly available, auto-scaling, and monitored AWS cloud infrastructure for **ShopNaija**, paired with a full-stack Python/FastAPI e-commerce application and automated continuous deployment.
+
+---
+
+## 📌 Problem Statement
+
+A Nigerian startup called **ShopNaija** has experienced rapid growth.
+
+Initially, the founders hosted everything on a single VPS (Virtual Private Server).
+
+After reaching over **50,000 monthly users**, they began experiencing critical operational bottlenecks:
+
+- **🚨 Website downtime during promotions**: Single server crashing under traffic spikes during flash sales and marketing campaigns.
+- **🐢 Slow application performance**: High latency and slow page loads due to serving dynamic content, static assets, and database queries from a single unoptimized host without edge caching.
+- **🔓 Poor security practices**: Database and application exposed on a public IP with open SSH ports, hardcoded credentials, and no network segmentation.
+- **💾 No backup strategy**: Zero automated backups or failover mechanisms, creating severe risk of permanent data loss in case of system failure.
+- **📉 No monitoring**: Complete lack of observability, metrics, and alerting to detect performance degradation or service outages proactively.
+- **🛠️ Manual deployments**: Error-prone, risky manual SSH deployments leading to service interruptions and inconsistent environments.
+- **📈 Difficulty scaling**: Inability to scale horizontally on demand; vertical scaling required costly server upgrades and noticeable downtime.
+
+---
+
+## 💡 The Solution: Enterprise Cloud Architecture & DevOps
+
+To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a **resilient, highly available, multi-tier AWS cloud infrastructure** provisioned using **Terraform (Infrastructure as Code)** and automated via **CI/CD**:
+
+| Problem Identified | Cloud Solution Implemented | AWS Services / Technologies |
+| :--- | :--- | :--- |
+| **Website Downtime During Promotions** | Elastic load balancing across multiple Availability Zones with dynamic auto-scaling to absorb traffic surges without manual intervention. | **Application Load Balancer (ALB)**, **EC2 Auto Scaling Group (ASG)** |
+| **Slow Application Performance** | Edge caching for static media, database query optimization, and offloaded asynchronous serverless image processing. | **Amazon CloudFront CDN**, **AWS Lambda**, **Amazon S3** |
+| **Poor Security Practices** | 3-tier VPC network isolation (Public, App, DB), security group chaining, dynamic secret rotation, IMDSv2 enforcement, and zero open SSH ports. | **Amazon VPC**, **AWS Secrets Manager**, **IAM**, **AWS Systems Manager (SSM)** |
+| **No Backup Strategy** | Automated Multi-AZ database replication with automated daily snapshots, point-in-time recovery (PITR), and S3 versioning/lifecycle management. | **Amazon RDS PostgreSQL (Multi-AZ)**, **Amazon S3 Versioning** |
+| **No Monitoring** | Proactive metric collection, automated alarms for CPU, memory, disk, and DB capacity, with instant notifications to engineers. | **Amazon CloudWatch**, **Amazon SNS** |
+| **Manual Deployments** | Fully automated CI/CD pipeline and zero-SSH SSM deployment script for rolling, reliable application updates without downtime. | **GitHub Actions**, **AWS Systems Manager (SSM)**, `deploy.py` |
+| **Difficulty Scaling** | Stateless application tier capable of scaling horizontally from 2 to 6+ instances on demand, fully codified via modular Terraform. | **Terraform (IaC)**, **EC2 Launch Templates**, **Auto Scaling Policies** |
 
 ---
 
