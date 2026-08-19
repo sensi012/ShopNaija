@@ -155,7 +155,7 @@ jobs:
   #         pip install boto3
 
   #     - name: Execute App Deployment Script
-  #       run: python deploy.py
+  #       run: python script/deploy.py
   #       env:
   #         AWS_REGION: ${{ env.AWS_REGION }}
   #         PROJECT_NAME: ${{ env.PROJECT_NAME }}

@@ -71,7 +71,7 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 ┌──────────────────────────────┐ ┌──────────────────────┐ ┌─────────────────────────┐
 │     AWS Secrets Manager      │ │  RDS PostgreSQL DB   │ │   S3 Bucket / Lambda    │
 │ (Auto-Generated Credentials) │ │ (Isolated DB Subnet) │ │ (Event-Driven Resizing) │
-└──────────────────────────────┘ └──────────────────────┘ └────────────┬────────────┘
+└──────────────────────────────┘ └──────────────────────┘ └─────────────────────────┘
                                                                        │
                                                                        │ 6. Thumbnail Event
                                                                        ▼
@@ -97,7 +97,9 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 ├── terraform.tfvars.example           # Example variable input file
 ├── backend-bucket.sh                  # Bootstrap script for Terraform S3 state bucket
 ├── remove-backend-bucket.sh           # Cleanup script for S3 state bucket
-├── deploy.py                          # Automated Python deployment script (SSM + S3)
+│
+├── script/                            # Operational & Automation Scripts
+│   └── deploy.py                      # Automated Python deployment script (SSM + S3)
 │
 ├── app/                               # Full-Stack FastAPI Web Application
 │   ├── main.py                        # FastAPI entry point & template setup
@@ -166,7 +168,7 @@ terraform apply tfplan         # Provision infrastructure on AWS
 Deploy the FastAPI application code to running EC2 instances via AWS Systems Manager (SSM):
 
 ```bash
-python deploy.py
+python script/deploy.py
 ```
 
 This script:

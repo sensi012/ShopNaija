@@ -69,7 +69,10 @@ def get_s3_bucket():
 
 def package_app():
     """Create a gzipped tarball of the app directory."""
-    app_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    app_dir = os.path.join(base_dir, "app")
+    if not os.path.exists(app_dir):
+        app_dir = os.path.join(os.path.dirname(base_dir), "app")
     tar_path = os.path.join(tempfile.gettempdir(), f"shopnaija-app-{int(time.time())}.tar.gz")
     print(f"📦 Packaging app from {app_dir}...")
     with tarfile.open(tar_path, "w:gz") as tar:
