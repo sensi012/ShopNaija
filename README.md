@@ -246,3 +246,4 @@ bash remove-backend-bucket.sh
 - **Dedicated Application Health Check Endpoint**: Implement a lightweight `@router.get("/health")` endpoint in FastAPI that returns `{"status": "ok"}` without database queries, ensuring instant health checks.
 - **GitHub OIDC from Day One**: Use AWS OIDC Web Identity Federation (`role-to-assume`) for CI/CD from project initialization, completely eliminating static IAM access keys (`AWS_ACCESS_KEY_ID`).
 - **Cost vs. Fault Tolerance Toggles**: Use `single_nat_gateway = true` during dev/testing to save ~$35/mo per AZ, but switch to `single_nat_gateway = false` in production so a single AZ outage does not interrupt outbound traffic.
+- **HashiCorp Vault**: an identity-based tool that securely manages, stores, and tightly controls access to tokens, passwords, certificates, and encryption keys instead of AWS Secrets Manager

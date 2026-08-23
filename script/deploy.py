@@ -63,7 +63,7 @@ def get_s3_bucket():
             if b["Name"].startswith(f"{PROJECT}-uploads-"):
                 return b["Name"]
     except Exception as e:
-        print(f"⚠️ Could not list S3 buckets: {e}")
+        print(f"Could not list S3 buckets: {e}")
     return None
 
 
@@ -74,23 +74,23 @@ def package_app():
     if not os.path.exists(app_dir):
         app_dir = os.path.join(os.path.dirname(base_dir), "app")
     tar_path = os.path.join(tempfile.gettempdir(), f"shopnaija-app-{int(time.time())}.tar.gz")
-    print(f"📦 Packaging app from {app_dir}...")
+    print(f"Packaging app from {app_dir}...")
     with tarfile.open(tar_path, "w:gz") as tar:
         tar.add(app_dir, arcname="app")
     size_mb = os.path.getsize(tar_path) / (1024 * 1024)
-    print(f"   Created {tar_path} ({size_mb:.2f} MB)")
+    print(f"Created {tar_path} ({size_mb:.2f} MB)")
     return tar_path
 
 
 def wait_for_ssm(ssm_client, instance_id, timeout=90):
-    print(f"   Waiting for SSM agent on {instance_id} to register...")
+    print(f"Waiting for SSM agent on {instance_id} to register...")
     for _ in range(timeout // 5):
         try:
             res = ssm_client.describe_instance_information(
                 Filters=[{"Key": "InstanceIds", "Values": [instance_id]}]
             )
             if res.get("InstanceInformationList"):
-                print(f"   ✅ SSM agent ready on {instance_id}!")
+                print(f"SSM agent ready on {instance_id}!")
                 return True
         except Exception:
             pass
@@ -99,24 +99,24 @@ def wait_for_ssm(ssm_client, instance_id, timeout=90):
 
 
 def main():
-    print("🔍 Discovering EC2 instances...")
+    print("Discovering EC2 instances...")
     instances = get_target_instances()
     if not instances:
-        print(f"❌ No running EC2 instances found for project '{PROJECT}' in {REGION}")
+        print(f"Norunning EC2 instances found for project '{PROJECT}' in {REGION}")
         sys.exit(1)
 
-    print(f"✅ Target instances: {', '.join(instances)}")
+    print(f"Target instances: {', '.join(instances)}")
 
     bucket = get_s3_bucket()
     tar_path = package_app()
 
     if bucket:
         s3_key = "deployments/shopnaija-app-latest.tar.gz"
-        print(f"☁️ Uploading artifact to s3://{bucket}/{s3_key}...")
+        print(f"Uploading artifact to s3://{bucket}/{s3_key}...")
         s3.upload_file(tar_path, bucket, s3_key)
         download_cmd = f"aws s3 cp s3://{bucket}/{s3_key} /tmp/shopnaija-app.tar.gz --region {REGION}"
     else:
-        print("⚠️ S3 bucket not found, using raw transfer")
+        print("S3 bucket not found, using raw transfer")
         import base64
         with open(tar_path, "rb") as f:
             b64_data = base64.b64encode(f.read()).decode("utf-8")
@@ -145,9 +145,9 @@ def main():
     ]
 
     for instance_id in instances:
-        print(f"\n🚀 Deploying to {instance_id}...")
+        print(f"\nDeploying to {instance_id}...")
         if not wait_for_ssm(ssm, instance_id):
-            print(f"❌ {instance_id} SSM agent did not come online in time. Skipping.")
+            print(f"{instance_id} SSM agent did not come online in time. Skipping.")
             continue
 
         res = ssm.send_command(
@@ -174,7 +174,7 @@ def main():
 
         print(f"   Status: {status}")
         if status == "Success":
-            print(f"   ✅ {instance_id} — Deployed successfully!")
+            print(f"{instance_id} — Deployed successfully!")
         else:
             try:
                 inv = ssm.get_command_invocation(CommandId=cmd_id, InstanceId=instance_id)
@@ -183,8 +183,8 @@ def main():
             except Exception:
                 pass
 
-    print("\n🎉 All instances updated!")
-    print("   Visit your ALB DNS to view the app.")
+    print("\nAll instances updated!")
+    print("Visit your ALB DNS to view the app.")
 
 
 if __name__ == "__main__":
