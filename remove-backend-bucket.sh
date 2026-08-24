@@ -1,3 +1,7 @@
+#!/usr/bin/bash
+
+echo 
+
 # Remove state lock
 aws s3 rb s3://shopnaija-bucket-terraform-state/production/terraform.tfstate.tflock --region eu-west-1
 
