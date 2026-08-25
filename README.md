@@ -40,7 +40,10 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 
 ## 🏗️ Architecture Overview
 
+![ShopNaija Architecture Diagram](Architecture-diagram/ShopNaija_Architecture.png)
+
 ```
+
                                   USER BROWSER / CLIENT
                                             │
                                 1. HTTPS / HTTP Requests
@@ -93,8 +96,13 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 ├── provider.tf                        # AWS Provider & required version pins
 ├── backend.tf                         # S3 Remote State backend configuration
 ├── variable.tf                        # Root input variables
-├── output.tf                          # Root deployment outputs (ALB DNS, API URL, S3 Bucket)
+├── output.tf                          # Root deployment outputs (ALB DNS, API URL, S3 Bucket, IAM Role)
 ├── terraform.tfvars.example           # Example variable input file
+├── dev.tfvars                         # Development environment variables (gitignored)
+├── terraform.tfvars                   # Production environment variables (gitignored)
+├── cost.md                            # Complete Production vs Development Cost Breakdown ($531.92 vs $108.08)
+├── cost-diff.md                       # Global AWS Regional Cost & Latency Comparison
+├── Architecture-diagram/              # Visual architecture diagrams and assets
 ├── backend-bucket.sh                  # Bootstrap script for Terraform S3 state bucket
 ├── remove-backend-bucket.sh           # Cleanup script for S3 state bucket
 │
@@ -116,9 +124,9 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 ├── module/                            # Modularized Infrastructure Components
 │   ├── vpc/                           # VPC, 6 Subnets across 3 Tiers (Public/App/DB), IGW, NAT, VPCE
 │   ├── security/                      # Strict Security Group chain (ALB -> EC2 -> RDS)
-│   ├── iam/                           # Least-privilege IAM roles (EC2, Lambda, CI/CD)
+│   ├── iam/                           # Least-privilege IAM roles (EC2, Lambda, OIDC CI/CD per environment)
 │   ├── storage/                       # S3 uploads bucket, encryption, versioning, lifecycle rules
-│   ├── database/                      # RDS PostgreSQL Multi-AZ & AWS Secrets Manager credentials
+│   ├── database/                      # RDS PostgreSQL Multi-AZ/Single-AZ & AWS Secrets Manager
 │   ├── compute/                       # Launch Template, EC2 Auto Scaling Group, ALB, Health Checks
 │   ├── cdn/                           # CloudFront Distribution with Dual-Origin & OAC Security
 │   ├── lambda/                        # Pillow image processing function & S3 event trigger
@@ -126,8 +134,23 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 │   └── monitoring/                    # CloudWatch Metric Alarms (CPU, Memory, Disk) & SNS Topic
 │
 └── .github/workflows/
-    └── ci.yml                         # GitHub Actions CI/CD Pipeline (Lint, Validate, Apply, Deploy)
+    └── ci.yml                         # GitHub Actions CI/CD Pipeline (Lint, Validate, Apply, Deploy per environment)
 ```
+
+---
+
+## 🌐 Multi-Environment Strategy (Workspaces & Costs)
+
+ShopNaija uses **Terraform Workspaces** to maintain isolated Dev and Production environments from a single codebase:
+
+| Environment | Terraform Workspace | Variable File | Key Architectural Adjustments | Estimated Monthly Cost |
+| :--- | :--- | :--- | :--- | :---: |
+| **Development** | `dev` | `dev.tfvars` | Single-AZ RDS, `t4g.small` instances, SSM routed over NAT (`enable_ssm_endpoints = false`) | **~$108.08 / mo** |
+| **Production** | `prod` | `terraform.tfvars` | Multi-AZ RDS, `m7g.large` Graviton3, dedicated VPC Interface Endpoints (`enable_ssm_endpoints = true`) | **~$531.92 / mo** |
+
+> 📚 **Detailed Reports**:
+> - [cost.md](file:///c:/Users/hp/M4ACE/ShopNaija/cost.md): Line-by-line spend comparison between Dev and Prod.
+> - [cost-diff.md](file:///c:/Users/hp/M4ACE/ShopNaija/cost-diff.md): Global AWS regional pricing and latency analysis (why `eu-west-1` is optimal for Nigeria).
 
 ---
 
@@ -148,23 +171,34 @@ aws s3api put-bucket-versioning --bucket shopnaija-bucket-terraform-state --vers
 
 ## 🚀 Quick Start & Deployment Guide
 
-### 1. Configure Input Variables
-Copy the example variables file and update it with your configuration:
-
-```bash
-cp terraform.tfvars.example terraform.tfvars
-```
-
-### 2. Initialize & Deploy Infrastructure
+### 1. Initialize Terraform
 ```bash
 terraform init                 # Initialize providers and configure remote S3 state backend
 terraform fmt -recursive       # Format code files
 terraform validate             # Validate Terraform syntax
-terraform plan -out=tfplan     # Preview planned infrastructure resources
-terraform apply tfplan         # Provision infrastructure on AWS
 ```
 
-### 3. Deploy Application Code onto EC2 Fleet
+### 2. Deploy Development Environment
+```bash
+# Select or create the dev workspace
+terraform workspace select dev || terraform workspace new dev
+
+# Preview & apply with dev variables
+terraform plan -var-file="dev.tfvars"
+terraform apply -var-file="dev.tfvars"
+```
+
+### 3. Deploy Production Environment
+```bash
+# Select or create the prod workspace
+terraform workspace select prod || terraform workspace new prod
+
+# Preview & apply with prod variables
+terraform plan -var-file="terraform.tfvars"
+terraform apply -var-file="terraform.tfvars"
+```
+
+### 4. Deploy Application Code onto EC2 Fleet
 Deploy the FastAPI application code to running EC2 instances via AWS Systems Manager (SSM):
 
 ```bash
@@ -180,8 +214,10 @@ This script:
 
 ## 🔒 Security Architecture Highlights
 
+- **Environment-Scoped OIDC CI/CD Isolation**: GitHub Actions uses temporary OIDC tokens with strict `sub` claim filtering. Workflows running on `dev` can only assume `shopnaija-dev-deployment-role`, preventing dev pipelines from ever modifying Production resources.
 - **Zero Open SSH Ports**: EC2 instances reside in private subnets with no public IPs. Management is performed via AWS Systems Manager (SSM) Session Manager and Run Command.
 - **Strict Security Group Chaining**: 
+
   - `ALB SG` accepts 80/443 from `0.0.0.0/0`.
   - `EC2 SG` accepts 8080 **only** from `ALB SG`.
   - `RDS SG` accepts 5432 **only** from `EC2 SG`.
