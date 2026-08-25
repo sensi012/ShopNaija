@@ -133,6 +133,7 @@ resource "aws_route_table_association" "private_db" {
 # with AWS Systems Manager and fetch S3 assets immediately.
 # ------------------------------------------------------------------
 resource "aws_security_group" "vpc_endpoints" {
+  count       = var.enable_ssm_endpoints ? 1 : 0
   name        = "${var.project_name}-vpce-sg"
   description = "Security group for VPC Interface Endpoints"
   vpc_id      = aws_vpc.main.id
@@ -158,11 +159,12 @@ resource "aws_security_group" "vpc_endpoints" {
 }
 
 resource "aws_vpc_endpoint" "ssm" {
+  count               = var.enable_ssm_endpoints ? 1 : 0
   vpc_id              = aws_vpc.main.id
-  service_name        = "com.amazonaws.${var.availability_zones[0] != "" ? "eu-west-1" : "eu-west-1"}.ssm"
+  service_name        = "com.amazonaws.eu-west-1.ssm"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private_app[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints[0].id]
   private_dns_enabled = true
 
   tags = {
@@ -171,11 +173,12 @@ resource "aws_vpc_endpoint" "ssm" {
 }
 
 resource "aws_vpc_endpoint" "ssmmessages" {
+  count               = var.enable_ssm_endpoints ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.eu-west-1.ssmmessages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private_app[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints[0].id]
   private_dns_enabled = true
 
   tags = {
@@ -184,11 +187,12 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 }
 
 resource "aws_vpc_endpoint" "ec2messages" {
+  count               = var.enable_ssm_endpoints ? 1 : 0
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.eu-west-1.ec2messages"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private_app[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints[0].id]
   private_dns_enabled = true
 
   tags = {

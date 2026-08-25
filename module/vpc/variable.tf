@@ -26,3 +26,9 @@ variable "single_nat_gateway" {
   type    = bool
   default = true
 }
+
+variable "enable_ssm_endpoints" {
+  type    = bool
+  default = true
+}
+

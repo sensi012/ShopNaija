@@ -10,6 +10,7 @@ module "vpc" {
   private_db_subnet_cidrs  = var.private_db_subnet_cidrs
   availability_zones       = var.availability_zones
   single_nat_gateway       = var.single_nat_gateway
+  enable_ssm_endpoints     = var.enable_ssm_endpoints
 }
 
 # ------------------------------------------------------------------
@@ -27,6 +28,7 @@ module "security" {
 module "iam" {
   source        = "./module/iam"
   project_name  = var.project_name
+  environment   = var.environment
   s3_bucket_arn = module.storage.bucket_arn
   db_secret_arn = module.database.secret_arn
   github_org    = var.github_org
