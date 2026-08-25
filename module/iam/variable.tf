@@ -19,3 +19,10 @@ variable "github_repo" {
   type        = string
   description = "GitHub repository name"
 }
+
+variable "environment" {
+  type        = string
+  description = "Deployment environment (e.g. production, dev)"
+  default     = "production"
+}
+

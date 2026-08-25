@@ -117,6 +117,21 @@ data "aws_iam_openid_connect_provider" "github_actions" {
   url = "https://token.actions.githubusercontent.com"
 }
 
+locals {
+  is_prod = var.environment == "production" || var.environment == "prod"
+
+  oidc_sub_conditions = local.is_prod ? [
+    "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main",
+    "repo:${var.github_org}/${var.github_repo}:environment:production",
+    "repo:${var.github_org}/${var.github_repo}:environment:prod"
+    ] : [
+    "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/dev",
+    "repo:${var.github_org}/${var.github_repo}:environment:dev",
+    "repo:${var.github_org}/${var.github_repo}:environment:development",
+    "repo:${var.github_org}/${var.github_repo}:pull_request"
+  ]
+}
+
 data "aws_iam_policy_document" "deployment_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -137,19 +152,20 @@ data "aws_iam_policy_document" "deployment_assume" {
       variable = "token.actions.githubusercontent.com:aud"
       values   = ["sts.amazonaws.com"]
     }
-    # Restrict to only your specific GitHub org and repo
+    # Restrict to only the specific environment's branches and GitHub environments
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:*"]
+      values   = local.oidc_sub_conditions
     }
   }
 }
 
 resource "aws_iam_role" "deployment_role" {
-  name               = "${var.project_name}-deployment-role"
+  name               = "${var.project_name}-${var.environment}-deployment-role"
   assume_role_policy = data.aws_iam_policy_document.deployment_assume.json
 }
+
 
 # Grant the deployment role enough permissions to run Terraform and deploy the app
 data "aws_iam_policy_document" "deployment_policy" {
@@ -210,7 +226,8 @@ data "aws_iam_policy_document" "deployment_policy" {
 }
 
 resource "aws_iam_role_policy" "deployment_policy" {
-  name   = "${var.project_name}-deployment-policy"
+  name   = "${var.project_name}-${var.environment}-deployment-policy"
   role   = aws_iam_role.deployment_role.id
   policy = data.aws_iam_policy_document.deployment_policy.json
 }
+

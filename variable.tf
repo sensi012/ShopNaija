@@ -13,7 +13,7 @@ variable "environment" {
 variable "aws_region" {
   description = "AWS region to deploy into"
   type        = string
-  default     = "eu-west-1" # Ireland - closer to Nigeria than us-east-1; consider af-south-1 (Cape Town) if services you need are available there
+  default     = "eu-west-1"
 }
 
 variable "vpc_cidr" {
@@ -145,3 +145,10 @@ variable "github_repo" {
   type        = string
   default     = "ShopNaija"
 }
+
+variable "enable_ssm_endpoints" {
+  description = "Enable VPC Interface Endpoints for SSM. Set to false in Dev to save ~$43.80/mo by routing through NAT Gateway."
+  type        = bool
+  default     = true
+}
+

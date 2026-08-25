@@ -29,3 +29,9 @@ output "sns_topic_arn" {
   description = "Subscribe additional alert endpoints here"
   value       = module.monitoring.sns_topic_arn
 }
+
+output "deployment_role_arn" {
+  description = "IAM role ARN for GitHub Actions OIDC CI/CD deployment"
+  value       = module.iam.deployment_role_arn
+}
+

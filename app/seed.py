@@ -151,10 +151,10 @@ def seed():
             print("  ✓ Admin user: admin@shopnaija.com / Admin@1234")
 
         db.commit()
-        print("\n✅ Database seeded successfully!")
+        print("\n Database seeded successfully!")
     except Exception as exc:
         db.rollback()
-        print(f"❌ Seed failed: {exc}")
+        print(f" Seed failed: {exc}")
         raise
     finally:
         db.close()
