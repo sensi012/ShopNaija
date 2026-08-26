@@ -134,7 +134,8 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 │   └── monitoring/                    # CloudWatch Metric Alarms (CPU, Memory, Disk) & SNS Topic
 │
 └── .github/workflows/
-    └── ci.yml                         # GitHub Actions CI/CD Pipeline (Lint, Validate, Apply, Deploy per environment)
+    ├── ci.yml                         # CI Pipeline: Linting, Unit Tests & Terraform Validation
+    └── cd.yml                         # CD Pipeline: Multi-Environment Deployment (Dev & Prod)
 ```
 
 ---
@@ -214,10 +215,10 @@ This script:
 
 ## 🔒 Security Architecture Highlights
 
+- **Automated DevSecOps Security Scanning**: Integrated **Aqua Security Trivy** in CI to continuously scan Terraform IaC for misconfigurations, Python dependencies for CVEs, and the codebase for hardcoded secrets.
 - **Environment-Scoped OIDC CI/CD Isolation**: GitHub Actions uses temporary OIDC tokens with strict `sub` claim filtering. Workflows running on `dev` can only assume `shopnaija-dev-deployment-role`, preventing dev pipelines from ever modifying Production resources.
 - **Zero Open SSH Ports**: EC2 instances reside in private subnets with no public IPs. Management is performed via AWS Systems Manager (SSM) Session Manager and Run Command.
 - **Strict Security Group Chaining**: 
-
   - `ALB SG` accepts 80/443 from `0.0.0.0/0`.
   - `EC2 SG` accepts 8080 **only** from `ALB SG`.
   - `RDS SG` accepts 5432 **only** from `EC2 SG`.
@@ -225,6 +226,7 @@ This script:
 - **Private S3 Media Storage**: The S3 uploads bucket is 100% private (`block_public_access`). Public media requests must pass through **CloudFront CDN** via **Origin Access Control (OAC)** with SigV4 signing.
 - **IMDSv2 Enforced**: EC2 instances require Instance Metadata Service Version 2 (`http_tokens = "required"`), mitigating SSRF risks.
 - **Enforced Encryption**: Storage is encrypted at rest (EBS, RDS, S3) and in transit (HTTPS, TLS 1.2/1.3, S3 `aws:SecureTransport` policy).
+
 
 ---
 

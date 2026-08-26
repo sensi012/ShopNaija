@@ -1,4 +1,4 @@
-name: ShopNaija CI/CD Pipeline
+name: ShopNaija CI Pipeline
 
 on:
   push:
@@ -11,9 +11,7 @@ on:
       - dev
   workflow_dispatch:
 
-# Required for OIDC JWT token authentication with AWS
 permissions:
-  id-token: write
   contents: read
 
 env:
@@ -83,112 +81,23 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
-  # # ------------------------------------------------------------------
-  # # Job 3: Deploy to DEV Environment (dev branch only)
-  # # ------------------------------------------------------------------
-  # deploy-dev:
-  #   name: Deploy to Dev Environment
-  #   needs: [test-app, terraform-ci]
-  #   if: github.ref == 'refs/heads/dev' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-  #   runs-on: ubuntu-latest
-  #   environment: dev
+  # ------------------------------------------------------------------
+  # Job 3: DevSecOps Vulnerability & Security Scan (Trivy)
+  # ------------------------------------------------------------------
+  security-scan:
+    name: Security & Vulnerability Scan (Trivy)
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: "1.15.8"
-
-  #     - name: Set up Python 3.12
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: "3.12"
-
-  #     # AWS OIDC Authentication scoped to 'dev' environment role
-  #     - name: Configure AWS Credentials via OIDC (Dev)
-  #       uses: aws-actions/configure-aws-credentials@v6.2.3
-  #       with:
-  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-  #         role-session-name: GitHubActionsDevSession
-  #         aws-region: ${{ env.AWS_REGION }}
-
-  #     - name: Terraform Init
-  #       run: terraform init
-
-  #     - name: Select or Create Dev Workspace
-  #       run: terraform workspace select dev || terraform workspace new dev
-
-  #     - name: Terraform Apply (Dev)
-  #       run: terraform apply -var-file="dev.tfvars" -auto-approve
-
-  #     - name: Install Deploy Script Dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install boto3
-
-  #     - name: Execute App Deployment Script
-  #       run: python script/deploy.py
-  #       env:
-  #         AWS_REGION: ${{ env.AWS_REGION }}
-  #         PROJECT_NAME: ${{ env.PROJECT_NAME }}
-
-  # # ------------------------------------------------------------------
-  # # Job 4: Deploy to PRODUCTION Environment (main branch only)
-  # # ------------------------------------------------------------------
-  # deploy-prod:
-  #   name: Deploy to Production Environment
-  #   needs: [test-app, terraform-ci]
-  #   if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-  #   runs-on: ubuntu-latest
-  #   environment: production
-
-  #   steps:
-  #     - name: Checkout Repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup Terraform
-  #       uses: hashicorp/setup-terraform@v3
-  #       with:
-  #         terraform_version: "1.15.8"
-
-  #     - name: Set up Python 3.12
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: "3.12"
-
-  #     # AWS OIDC Authentication scoped to 'production' environment role
-  #     - name: Configure AWS Credentials via OIDC (Prod)
-  #       uses: aws-actions/configure-aws-credentials@v6.2.3
-  #       with:
-  #         role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-  #         role-session-name: GitHubActionsProdSession
-  #         aws-region: ${{ env.AWS_REGION }}
-
-  #     - name: Create Production tfvars if Missing
-  #       run: |
-  #         if [ ! -f terraform.tfvars ]; then
-  #           cp terraform.tfvars.example terraform.tfvars
-  #         fi
-
-  #     - name: Terraform Init
-  #       run: terraform init
-
-  #     - name: Select or Create Prod Workspace
-  #       run: terraform workspace select prod || terraform workspace new prod
-
-  #     - name: Terraform Apply (Prod)
-  #       run: terraform apply -var-file="terraform.tfvars" -auto-approve
-
-  #     - name: Install Deploy Script Dependencies
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install boto3
-
-  #     - name: Execute App Deployment Script
-  #       run: python script/deploy.py
-  #       env:
-  #         AWS_REGION: ${{ env.AWS_REGION }}
-  #         PROJECT_NAME: ${{ env.PROJECT_NAME }}
+      - name: Run Trivy Security Scanner (IaC, Secrets & Dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln,secret,misconfig'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
