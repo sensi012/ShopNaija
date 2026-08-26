@@ -1,6 +1,13 @@
 # 🛒 ShopNaija — Production AWS Infrastructure & Full-Stack Application
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![AWS](https://img.shields.io/badge/AWS-eu--west--1-232F3E?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Terraform](https://img.shields.io/badge/Terraform-1.15+-844FBA?logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![Python](https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+
 Production-grade, highly available, auto-scaling, and monitored AWS cloud infrastructure for **ShopNaija**, paired with a full-stack Python/FastAPI e-commerce application and automated continuous deployment.
+
 
 ---
 
@@ -97,6 +104,7 @@ To resolve these challenges, ShopNaija was migrated from the monolithic VPS to a
 ├── backend.tf                         # S3 Remote State backend configuration
 ├── variable.tf                        # Root input variables
 ├── output.tf                          # Root deployment outputs (ALB DNS, API URL, S3 Bucket, IAM Role)
+├── LICENSE                            # MIT License
 ├── terraform.tfvars.example           # Example variable input file
 ├── dev.tfvars                         # Development environment variables (gitignored)
 ├── terraform.tfvars                   # Production environment variables (gitignored)
@@ -285,3 +293,9 @@ bash remove-backend-bucket.sh
 - **GitHub OIDC from Day One**: Use AWS OIDC Web Identity Federation (`role-to-assume`) for CI/CD from project initialization, completely eliminating static IAM access keys (`AWS_ACCESS_KEY_ID`).
 - **Cost vs. Fault Tolerance Toggles**: Use `single_nat_gateway = true` during dev/testing to save ~$35/mo per AZ, but switch to `single_nat_gateway = false` in production so a single AZ outage does not interrupt outbound traffic.
 - **HashiCorp Vault**: an identity-based tool that securely manages, stores, and tightly controls access to tokens, passwords, certificates, and encryption keys instead of AWS Secrets Manager
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
