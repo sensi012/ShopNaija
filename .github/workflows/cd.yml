@@ -1,0 +1,145 @@
+# name: ShopNaija CD Pipeline
+
+# on:
+#   push:
+#     branches:
+#       - main
+#       - dev
+#   workflow_dispatch:
+
+# # Required for OIDC JWT token authentication with AWS
+# permissions:
+#   id-token: write
+#   contents: read
+
+# env:
+#   AWS_REGION: eu-west-1
+#   PROJECT_NAME: shopnaija
+
+# jobs:
+#   # ------------------------------------------------------------------
+#   # Job 1: Deploy to DEV Environment (dev branch only)
+#   # ------------------------------------------------------------------
+#   deploy-dev:
+#     name: Deploy to Dev Environment
+#     if: github.ref == 'refs/heads/dev' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+#     runs-on: ubuntu-latest
+#     environment: dev
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: "1.15.8"
+
+#       - name: Set up Python 3.12
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
+
+#       # AWS OIDC Authentication scoped to 'dev' environment role
+#       - name: Configure AWS Credentials via OIDC (Dev)
+#         uses: aws-actions/configure-aws-credentials@v6.2.3
+#         with:
+#           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#           role-session-name: GitHubActionsDevSession
+#           aws-region: ${{ env.AWS_REGION }}
+
+#       - name: Create dev.tfvars from Secret
+#         env:
+#           TFVARS_DEV: ${{ secrets.TFVARS_DEV || secrets.TFVARS }}
+#         run: |
+#           if [ -n "$TFVARS_DEV" ]; then
+#             echo "$TFVARS_DEV" > dev.tfvars
+#           else
+#             echo "::error::TFVARS_DEV (or TFVARS) secret is missing in GitHub Secrets."
+#             exit 1
+#           fi
+
+#       - name: Terraform Init
+#         run: terraform init
+
+#       - name: Select or Create Dev Workspace
+#         run: terraform workspace select dev || terraform workspace new dev
+
+#       - name: Terraform Apply (Dev)
+#         run: terraform apply -var-file="dev.tfvars" -auto-approve
+
+#       - name: Install Deploy Script Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install boto3
+
+#       - name: Execute App Deployment Script
+#         run: python script/deploy.py
+#         env:
+#           AWS_REGION: ${{ env.AWS_REGION }}
+#           PROJECT_NAME: ${{ env.PROJECT_NAME }}
+
+#   # ------------------------------------------------------------------
+#   # Job 2: Deploy to PRODUCTION Environment (main branch only)
+#   # ------------------------------------------------------------------
+#   deploy-prod:
+#     name: Deploy to Production Environment
+#     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+#     runs-on: ubuntu-latest
+#     environment: production
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v4
+
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v3
+#         with:
+#           terraform_version: "1.15.8"
+
+#       - name: Set up Python 3.12
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: "3.12"
+
+#       # AWS OIDC Authentication scoped to 'production' environment role
+#       - name: Configure AWS Credentials via OIDC (Prod)
+#         uses: aws-actions/configure-aws-credentials@v6.2.3
+#         with:
+#           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+#           role-session-name: GitHubActionsProdSession
+#           aws-region: ${{ env.AWS_REGION }}
+
+#       - name: Create terraform.tfvars from Secret
+#         env:
+#           TFVARS_PROD: ${{ secrets.TFVARS_PROD || secrets.TFVARS }}
+#         run: |
+#           if [ -n "$TFVARS_PROD" ]; then
+#             echo "$TFVARS_PROD" > terraform.tfvars
+#           elif [ -f terraform.tfvars.example ]; then
+#             echo "::warning::TFVARS_PROD secret is missing. Falling back to terraform.tfvars.example"
+#             cp terraform.tfvars.example terraform.tfvars
+#           else
+#             echo "::error::TFVARS_PROD (or TFVARS) secret is missing in GitHub Secrets."
+#             exit 1
+#           fi
+
+#       - name: Terraform Init
+#         run: terraform init
+
+#       - name: Select or Create Prod Workspace
+#         run: terraform workspace select prod || terraform workspace new prod
+
+#       - name: Terraform Apply (Prod)
+#         run: terraform apply -var-file="terraform.tfvars" -auto-approve
+
+#       - name: Install Deploy Script Dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install boto3
+
+#       - name: Execute App Deployment Script
+#         run: python script/deploy.py
+#         env:
+#           AWS_REGION: ${{ env.AWS_REGION }}
+#           PROJECT_NAME: ${{ env.PROJECT_NAME }}
