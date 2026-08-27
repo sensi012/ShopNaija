@@ -35,3 +35,8 @@ output "deployment_role_arn" {
   value       = module.iam.deployment_role_arn
 }
 
+output "cloudfront_domain_name" {
+  description = "CloudFront Distribution Domain Name for CDN"
+  value       = module.cdn.distribution_domain_name
+}
+

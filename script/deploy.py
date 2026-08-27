@@ -122,6 +122,8 @@ def main():
             b64_data = base64.b64encode(f.read()).decode("utf-8")
         download_cmd = f"echo '{b64_data}' | base64 -d > /tmp/shopnaija-app.tar.gz"
 
+    cloudfront_url = os.environ.get("CLOUDFRONT_URL", "")
+
     commands = [
         "set -euo pipefail",
         "echo '=== Deploying ShopNaija ==='",
@@ -135,6 +137,8 @@ def main():
         f"chmod +x {REMOTE_DIR}/start.sh",
         f"cd {REMOTE_DIR}",
         "dnf install -y python3.12 python3.12-pip python3-pip git || true",
+        f"sed -i '/^export CLOUDFRONT_URL=/d' /etc/environment",
+        f"echo 'export CLOUDFRONT_URL={cloudfront_url}' >> /etc/environment",
         "[ -f /etc/environment ] && source /etc/environment || true",
         "python3.12 -m pip install -q -r requirements.txt || python3 -m pip install -q -r requirements.txt",
         "python3.12 seed.py || python3 seed.py || true",

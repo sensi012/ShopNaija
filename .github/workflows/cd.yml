@@ -68,6 +68,11 @@ jobs:
       - name: Terraform Apply (Dev)
         run: terraform apply -var-file="dev.tfvars" -auto-approve
 
+      - name: Export Terraform Outputs
+        id: tf_outputs
+        run: |
+          echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+
       - name: Install Deploy Script Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -78,6 +83,7 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          CLOUDFRONT_URL: ${{ env.CLOUDFRONT_URL }}
 
   # ------------------------------------------------------------------
   # Job 2: Deploy to PRODUCTION Environment (main branch only)
@@ -133,6 +139,11 @@ jobs:
       - name: Terraform Apply (Prod)
         run: terraform apply -var-file="terraform.tfvars" -auto-approve
 
+      - name: Export Terraform Outputs
+        id: tf_outputs
+        run: |
+          echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+
       - name: Install Deploy Script Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -143,3 +154,4 @@ jobs:
         env:
           AWS_REGION: ${{ env.AWS_REGION }}
           PROJECT_NAME: ${{ env.PROJECT_NAME }}
+          CLOUDFRONT_URL: ${{ env.CLOUDFRONT_URL }}
