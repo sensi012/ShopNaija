@@ -135,7 +135,7 @@ def main():
         f"chmod +x {REMOTE_DIR}/start.sh",
         f"cd {REMOTE_DIR}",
         "dnf install -y python3.12 python3.12-pip python3-pip git || true",
-        "[ -f /etc/environment ] && export $(cat /etc/environment | xargs) || true",
+        "[ -f /etc/environment ] && source /etc/environment || true",
         "python3.12 -m pip install -q -r requirements.txt || python3 -m pip install -q -r requirements.txt",
         "python3.12 seed.py || python3 seed.py || true",
         "nohup bash start.sh > /var/log/shopnaija.log 2>&1 &",

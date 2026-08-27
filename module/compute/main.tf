@@ -63,7 +63,7 @@ resource "aws_launch_template" "app" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "${var.project_name}-app-instance"
+      Name = "${var.project_name}-app-instance-${var.environment}"
     }
   }
 
@@ -108,19 +108,15 @@ resource "aws_lb_target_group" "app" {
   deregistration_delay = 30 # faster deploys - don't wait long for connection draining on a low-traffic health check target
 }
 
-# HTTP listener redirects straight to HTTPS
+# HTTP listener forwards traffic to target group (CloudFront connects over port 80)
 resource "aws_lb_listener" "http_redirect" {
   load_balancer_arn = aws_lb.main.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
   }
 }
 
