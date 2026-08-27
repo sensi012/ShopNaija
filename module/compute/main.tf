@@ -1,13 +1,30 @@
-# Latest Amazon Linux 2023 AMI - always current, never a stale hardcoded AMI ID
+locals {
+  # Automatically detect whether instance_type uses AWS Graviton (ARM64) or standard x86_64
+  is_arm64 = can(regex("^[a-z]+[0-9]+g|^a1|^im4gn|^is4gen|^g5g", var.instance_type))
+  ami_arch = local.is_arm64 ? "arm64" : "x86_64"
+}
+
+# Latest Amazon Linux 2023 AMI - dynamically matches the instance architecture (ARM64 vs x86_64)
 data "aws_ami" "al2023" {
   most_recent = true
   owners      = ["amazon"]
 
   filter {
     name   = "name"
-    values = ["al2023-ami-*-x86_64"]
+    values = ["al2023-ami-2023.*-${local.ami_arch}"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = [local.ami_arch]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
+
 
 # Launch Template
 resource "aws_launch_template" "app" {
