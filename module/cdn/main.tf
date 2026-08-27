@@ -110,8 +110,8 @@ data "aws_cloudfront_origin_request_policy" "all_viewer" {
 
 data "aws_iam_policy_document" "s3_cdn_policy" {
   statement {
-    sid       = "AllowCloudFrontServicePrincipalReadOnly"
-    effect    = "Allow"
+    sid    = "AllowCloudFrontServicePrincipalReadOnly"
+    effect = "Allow"
     principals {
       type        = "Service"
       identifiers = ["cloudfront.amazonaws.com"]
@@ -132,7 +132,7 @@ data "aws_iam_policy_document" "s3_cdn_policy" {
       type        = "*"
       identifiers = ["*"]
     }
-    actions   = ["s3:*"]
+    actions = ["s3:*"]
     resources = [
       "arn:aws:s3:::${var.s3_bucket_id}",
       "arn:aws:s3:::${var.s3_bucket_id}/*"
