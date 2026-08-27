@@ -73,16 +73,7 @@ PRODUCTS = [
         "featured": True,
         "image_key": "uploads/products/nigerian-jollof-rice-mix.jpg",
     },
-    {
-        "name": "Egusi Soup Paste",
-        "slug": "egusi-soup-paste",
-        "description": "Ready-to-cook ground egusi (melon seed) paste, seasoned with palm oil and spices. 500g pack.",
-        "price": 3200,
-        "stock": 80,
-        "category_slug": "food",
-        "featured": False,
-        "image_key": "uploads/products/egusi-soup-paste.jpg",
-    },
+
     {
         "name": "Shea Butter Face Cream",
         "slug": "shea-butter-face-cream",
