@@ -46,8 +46,8 @@ def product_list(
     db: Session = Depends(get_db),
     q: str = "",
     category: str = "",
-    min_price: float = 0,
-    max_price: float = 0,
+    min_price: str = "",
+    max_price: str = "",
     sort: str = "newest",
     page: int = 1,
 ):
@@ -63,10 +63,16 @@ def product_list(
         )
     if category:
         query = query.join(models.Category).filter(models.Category.slug == category)
-    if min_price > 0:
-        query = query.filter(models.Product.price >= min_price)
-    if max_price > 0:
-        query = query.filter(models.Product.price <= max_price)
+    if min_price:
+        try:
+            query = query.filter(models.Product.price >= float(min_price))
+        except ValueError:
+            pass
+    if max_price:
+        try:
+            query = query.filter(models.Product.price <= float(max_price))
+        except ValueError:
+            pass
 
     if sort == "price_asc":
         query = query.order_by(models.Product.price.asc())

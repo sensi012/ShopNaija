@@ -56,12 +56,14 @@ class Settings:
 
     S3_BUCKET: str = os.environ.get("S3_BUCKET", "")
     AWS_REGION: str = os.environ.get("AWS_DEFAULT_REGION", "eu-west-1")
-    CLOUDFRONT_URL: str = os.environ.get("CLOUDFRONT_URL", "").rstrip("/")
+    CLOUDFRONT_URL: str = os.environ.get("CLOUDFRONT_URL", "https://d2phrl92j85lt6.cloudfront.net").rstrip("/")
 
     def image_url(self, key: str) -> str:
-        """Return full URL for an S3 image key."""
+        """Return full URL for an S3 image key or external URL."""
         if not key:
             return ""
+        if key.startswith("http://") or key.startswith("https://"):
+            return key
         if self.CLOUDFRONT_URL:
             return f"{self.CLOUDFRONT_URL}/{key}"
         if self.S3_BUCKET:

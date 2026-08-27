@@ -68,6 +68,7 @@ module "compute" {
   source = "./module/compute"
 
   project_name           = var.project_name
+  environment            = var.environment
   vpc_id                 = module.vpc.vpc_id
   public_subnet_ids      = module.vpc.public_subnet_ids
   private_app_subnet_ids = module.vpc.private_app_subnet_ids

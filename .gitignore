@@ -61,3 +61,7 @@ remove-backend-bucket.sh
 # ===========================================
 explain.txt
 resource-explain.txt
+ssm_out.json
+ssm_out_log.txt
+generated_images/
+scratch/
