@@ -1,7 +1,10 @@
 name: ShopNaija CD Pipeline
 
 on:
-  push:
+  workflow_run:
+    workflows: ["ShopNaija CI Pipeline"]
+    types:
+      - completed
     branches:
       - main
       - dev
@@ -22,7 +25,9 @@ jobs:
   # ------------------------------------------------------------------
   deploy-dev:
     name: Deploy to Dev Environment
-    if: github.ref == 'refs/heads/dev' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev')
     runs-on: ubuntu-latest
     environment: dev
 
@@ -90,7 +95,9 @@ jobs:
   # ------------------------------------------------------------------
   deploy-prod:
     name: Deploy to Production Environment
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     environment: production
 
