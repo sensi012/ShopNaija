@@ -32,3 +32,5 @@ variable "enable_ssm_endpoints" {
   default = true
 }
 
+
+variable "environment" { type = string }

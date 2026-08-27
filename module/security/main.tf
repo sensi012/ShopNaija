@@ -1,6 +1,6 @@
 #  ALB Security Group - only thing exposed to the raw internet
 resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-alb-sg"
+  name        = "${var.project_name}-${var.environment}-alb-sg"
   description = "Allow HTTPS/HTTP from internet to ALB"
   vpc_id      = var.vpc_id
 
@@ -34,7 +34,7 @@ resource "aws_security_group" "alb" {
 
 # EC2 Security Group - ONLY accepts traffic from the ALB
 resource "aws_security_group" "ec2" {
-  name        = "${var.project_name}-ec2-sg"
+  name        = "${var.project_name}-${var.environment}-ec2-sg"
   description = "Allow app traffic only from ALB; no public ingress, no SSH port 22 open"
   vpc_id      = var.vpc_id
 
@@ -60,7 +60,7 @@ resource "aws_security_group" "ec2" {
 
 # RDS Security Group - ONLY accepts traffic from EC2 app tier
 resource "aws_security_group" "rds" {
-  name        = "${var.project_name}-rds-sg"
+  name        = "${var.project_name}-${var.environment}-rds-sg"
   description = "Allow DB traffic only from application EC2 instances - no public access, ever"
   vpc_id      = var.vpc_id
 

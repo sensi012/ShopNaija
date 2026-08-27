@@ -13,3 +13,5 @@ variable "asg_name" {
 variable "db_instance_id" {
   type = string
 }
+
+variable "environment" { type = string }

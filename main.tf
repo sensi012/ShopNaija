@@ -4,6 +4,7 @@
 module "vpc" {
   source                   = "./module/vpc"
   project_name             = var.project_name
+  environment              = var.environment
   vpc_cidr                 = var.vpc_cidr
   public_subnet_cidrs      = var.public_subnet_cidrs
   private_app_subnet_cidrs = var.private_app_subnet_cidrs
@@ -19,6 +20,7 @@ module "vpc" {
 module "security" {
   source       = "./module/security"
   project_name = var.project_name
+  environment  = var.environment
   vpc_id       = module.vpc.vpc_id
 }
 
@@ -41,6 +43,7 @@ module "iam" {
 module "storage" {
   source       = "./module/storage"
   project_name = var.project_name
+  environment  = var.environment
 }
 
 # ------------------------------------------------------------------
@@ -50,6 +53,7 @@ module "database" {
   source = "./module/database"
 
   project_name          = var.project_name
+  environment           = var.environment
   db_subnet_ids         = module.vpc.private_db_subnet_ids
   db_security_group_id  = module.security.rds_sg_id
   db_engine             = var.db_engine
@@ -91,6 +95,7 @@ module "lambda" {
   source = "./module/lambda"
 
   project_name    = var.project_name
+  environment     = var.environment
   s3_bucket_name  = module.storage.bucket_name
   s3_bucket_arn   = module.storage.bucket_arn
   lambda_role_arn = module.iam.lambda_role_arn
@@ -104,6 +109,7 @@ module "api_gateway" {
   source = "./module/api_gateway"
 
   project_name         = var.project_name
+  environment          = var.environment
   lambda_function_arn  = module.lambda.function_arn
   lambda_function_name = module.lambda.function_name
 }
@@ -115,6 +121,7 @@ module "cdn" {
   source = "./module/cdn"
 
   project_name                   = var.project_name
+  environment                    = var.environment
   alb_dns_name                   = module.compute.alb_dns_name
   s3_bucket_regional_domain_name = module.storage.bucket_regional_domain_name
   s3_bucket_id                   = module.storage.bucket_id
@@ -163,6 +170,7 @@ module "monitoring" {
   source = "./module/monitoring"
 
   project_name   = var.project_name
+  environment    = var.environment
   alert_email    = var.alert_email
   asg_name       = module.compute.asg_name
   db_instance_id = module.database.db_instance_id

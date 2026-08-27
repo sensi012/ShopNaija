@@ -74,7 +74,7 @@ resource "aws_launch_template" "app" {
 
 # Application Load Balancer
 resource "aws_lb" "main" {
-  name               = "${var.project_name}-alb"
+  name               = "${var.project_name}-${var.environment}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.alb_sg_id]
@@ -91,7 +91,7 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "app" {
-  name     = "${var.project_name}-tg"
+  name     = "${var.project_name}-${var.environment}-tg"
   port     = 8080
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -143,7 +143,7 @@ resource "tls_self_signed_cert" "app" {
   private_key_pem = tls_private_key.app.private_key_pem
 
   subject {
-    common_name  = "${var.project_name}.local"
+    common_name  = "${var.project_name}-${var.environment}.local"
     organization = "ShopNaija"
   }
 
@@ -168,7 +168,7 @@ resource "aws_acm_certificate" "app" {
 
 # Auto Scaling Group
 resource "aws_autoscaling_group" "app" {
-  name                = "${var.project_name}-asg"
+  name                = "${var.project_name}-${var.environment}-asg"
   vpc_zone_identifier = var.private_app_subnet_ids
   target_group_arns   = [aws_lb_target_group.app.arn]
 
@@ -198,7 +198,7 @@ resource "aws_autoscaling_group" "app" {
 
 # Scale out on CPU - handles the "downtime during promotions" problem directly
 resource "aws_autoscaling_policy" "scale_out_cpu" {
-  name                   = "${var.project_name}-scale-out-cpu"
+  name                   = "${var.project_name}-${var.environment}-scale-out-cpu"
   autoscaling_group_name = aws_autoscaling_group.app.name
   policy_type            = "TargetTrackingScaling"
 

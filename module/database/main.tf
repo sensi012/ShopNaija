@@ -1,6 +1,6 @@
 
 resource "aws_db_instance" "main" {
-  identifier     = "${var.project_name}-db"
+  identifier     = "${var.project_name}-${var.environment}-db"
   engine         = var.db_engine
   engine_version = var.db_engine_version
   instance_class = var.db_instance_class
@@ -33,7 +33,7 @@ resource "aws_db_instance" "main" {
   # false = Creates a final backup snapshot before deleting (requires a unique final_snapshot_identifier; fails if snapshot name already exists).
   # true  = Destroys database immediately without creating a final backup snapshot.
   skip_final_snapshot       = true
-  final_snapshot_identifier = "${var.project_name}-db-final-snapshot"
+  final_snapshot_identifier = "${var.project_name}-${var.environment}-db-final-snapshot"
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
@@ -48,7 +48,7 @@ resource "random_password" "db_password" {
 }
 
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name        = "${var.project_name}/rds/credentials"
+  name        = "${var.project_name}/${var.environment}/rds/credentials"
   description = "RDS master credentials for ${var.project_name}"
 
   # recovery_window_in_days:
@@ -69,7 +69,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 
 
 resource "aws_db_subnet_group" "main" {
-  name       = "${var.project_name}-db-subnet-group"
+  name       = "${var.project_name}-${var.environment}-db-subnet-group"
   subnet_ids = var.db_subnet_ids
 
   tags = {

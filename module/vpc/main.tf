@@ -134,7 +134,7 @@ resource "aws_route_table_association" "private_db" {
 # ------------------------------------------------------------------
 resource "aws_security_group" "vpc_endpoints" {
   count       = var.enable_ssm_endpoints ? 1 : 0
-  name        = "${var.project_name}-vpce-sg"
+  name        = "${var.project_name}-${var.environment}-vpce-sg"
   description = "Security group for VPC Interface Endpoints"
   vpc_id      = aws_vpc.main.id
 

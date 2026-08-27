@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "ec2_assume" {
 }
 
 resource "aws_iam_role" "ec2_role" {
-  name               = "${var.project_name}-ec2-role"
+  name               = "${var.project_name}-${var.environment}-ec2-role"
   assume_role_policy = data.aws_iam_policy_document.ec2_assume.json
 }
 
@@ -29,7 +29,7 @@ data "aws_iam_policy_document" "ec2_s3_policy" {
 
 # Access to the bucket
 resource "aws_iam_role_policy" "ec2_s3" {
-  name   = "${var.project_name}-ec2-s3-policy"
+  name   = "${var.project_name}-${var.environment}-ec2-s3-policy"
   role   = aws_iam_role.ec2_role.id
   policy = data.aws_iam_policy_document.ec2_s3_policy.json
 }
@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "ec2_secrets_policy" {
 }
 
 resource "aws_iam_role_policy" "ec2_secrets" {
-  name   = "${var.project_name}-ec2-secrets-policy"
+  name   = "${var.project_name}-${var.environment}-ec2-secrets-policy"
   role   = aws_iam_role.ec2_role.id
   policy = data.aws_iam_policy_document.ec2_secrets_policy.json
 }
@@ -62,7 +62,7 @@ resource "aws_iam_role_policy_attachment" "ec2_ssm" {
 }
 
 resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "${var.project_name}-ec2-instance-profile"
+  name = "${var.project_name}-${var.environment}-ec2-instance-profile"
   role = aws_iam_role.ec2_role.name
 }
 
@@ -78,7 +78,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name               = "${var.project_name}-lambda-role"
+  name               = "${var.project_name}-${var.environment}-lambda-role"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
@@ -101,7 +101,7 @@ data "aws_iam_policy_document" "lambda_s3_policy" {
 }
 
 resource "aws_iam_role_policy" "lambda_s3" {
-  name   = "${var.project_name}-lambda-policy"
+  name   = "${var.project_name}-${var.environment}-lambda-policy"
   role   = aws_iam_role.lambda_role.id
   policy = data.aws_iam_policy_document.lambda_s3_policy.json
 }

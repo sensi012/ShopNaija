@@ -2,7 +2,7 @@
 # SNS Topic - single fan-out point for all alerts
 # ------------------------------------------------------------------
 resource "aws_sns_topic" "alerts" {
-  name = "${var.project_name}-alerts"
+  name = "${var.project_name}-${var.environment}-alerts"
 }
 
 resource "aws_sns_topic_subscription" "email" {
@@ -17,7 +17,7 @@ resource "aws_sns_topic_subscription" "email" {
 
 # CPU Utilization - catch sustained load before it degrades the app
 resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
-  alarm_name          = "${var.project_name}-ec2-cpu-high"
+  alarm_name          = "${var.project_name}-${var.environment}-ec2-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
@@ -36,7 +36,7 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_high" {
 
 # Instance health - ASG reports unhealthy instances
 resource "aws_cloudwatch_metric_alarm" "asg_unhealthy_hosts" {
-  alarm_name          = "${var.project_name}-unhealthy-hosts"
+  alarm_name          = "${var.project_name}-${var.environment}-unhealthy-hosts"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "GroupInServiceInstances"
@@ -55,7 +55,7 @@ resource "aws_cloudwatch_metric_alarm" "asg_unhealthy_hosts" {
 
 # Disk space - custom metric published by the CloudWatch agent installed via user_data
 resource "aws_cloudwatch_metric_alarm" "disk_space_low" {
-  alarm_name          = "${var.project_name}-disk-space-low"
+  alarm_name          = "${var.project_name}-${var.environment}-disk-space-low"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "disk_used_percent"
@@ -72,7 +72,7 @@ resource "aws_cloudwatch_metric_alarm" "disk_space_low" {
 # RDS Alarms
 # ------------------------------------------------------------------
 resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
-  alarm_name          = "${var.project_name}-rds-cpu-high"
+  alarm_name          = "${var.project_name}-${var.environment}-rds-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
@@ -90,7 +90,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_cpu_high" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "rds_low_storage" {
-  alarm_name          = "${var.project_name}-rds-low-storage"
+  alarm_name          = "${var.project_name}-${var.environment}-rds-low-storage"
   comparison_operator = "LessThanThreshold"
   evaluation_periods  = 1
   metric_name         = "FreeStorageSpace"
