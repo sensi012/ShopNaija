@@ -77,6 +77,11 @@ jobs:
         id: tf_outputs
         run: |
           echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+          echo "S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
+
+      - name: Upload Seed Images to S3
+        run: aws s3 sync generated_images/ s3://${{ env.S3_BUCKET_NAME }}/uploads/products/
+
 
       - name: Install Deploy Script Dependencies
         run: |
@@ -150,6 +155,11 @@ jobs:
         id: tf_outputs
         run: |
           echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+          echo "S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
+
+      - name: Upload Seed Images to S3
+        run: aws s3 sync generated_images/ s3://${{ env.S3_BUCKET_NAME }}/uploads/products/
+
 
       - name: Install Deploy Script Dependencies
         run: |
