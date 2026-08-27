@@ -37,3 +37,5 @@ variable "multi_az" {
 variable "backup_retention_days" {
   type = number
 }
+
+variable "environment" { type = string }

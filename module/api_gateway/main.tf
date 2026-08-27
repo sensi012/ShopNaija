@@ -1,5 +1,5 @@
 resource "aws_api_gateway_rest_api" "main" {
-  name        = "${var.project_name}-api"
+  name        = "${var.project_name}-${var.environment}-api"
   description = "REST API exposing ShopNaija Lambda functions"
 
   endpoint_configuration {
@@ -61,11 +61,11 @@ resource "aws_api_gateway_stage" "main" {
 
 # API key + usage plan - simple abuse/cost control, tighten with a real authorizer later
 resource "aws_api_gateway_api_key" "main" {
-  name = "${var.project_name}-api-key"
+  name = "${var.project_name}-${var.environment}-api-key"
 }
 
 resource "aws_api_gateway_usage_plan" "main" {
-  name = "${var.project_name}-usage-plan"
+  name = "${var.project_name}-${var.environment}-usage-plan"
 
   api_stages {
     api_id = aws_api_gateway_rest_api.main.id

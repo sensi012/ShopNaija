@@ -5,7 +5,7 @@ data "archive_file" "lambda_zip" {
 }
 
 resource "aws_lambda_function" "image_processor" {
-  function_name = "${var.project_name}-image-processor"
+  function_name = "${var.project_name}-${var.environment}-image-processor"
   role          = var.lambda_role_arn
   handler       = "index.handler"
   runtime       = "python3.12"

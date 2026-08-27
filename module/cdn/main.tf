@@ -1,6 +1,6 @@
 # OAC for cloudfront to access s3 bucket without being public
 resource "aws_cloudfront_origin_access_control" "s3" {
-  name                              = "${var.project_name}-s3-oac"
+  name                              = "${var.project_name}-${var.environment}-s3-oac"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"

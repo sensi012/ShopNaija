@@ -9,3 +9,5 @@ variable "lambda_function_arn" {
 variable "lambda_function_name" {
   type = string
 }
+
+variable "environment" { type = string }

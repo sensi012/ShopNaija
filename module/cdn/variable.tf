@@ -27,3 +27,5 @@ variable "domain_aliases" {
   type        = list(string)
   default     = []
 }
+
+variable "environment" { type = string }
