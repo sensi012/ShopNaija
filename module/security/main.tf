@@ -30,6 +30,10 @@ resource "aws_security_group" "alb" {
   tags = {
     Name = "${var.project_name}-alb-sg"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # EC2 Security Group - ONLY accepts traffic from the ALB
@@ -56,6 +60,10 @@ resource "aws_security_group" "ec2" {
   tags = {
     Name = "${var.project_name}-ec2-sg"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # RDS Security Group - ONLY accepts traffic from EC2 app tier
@@ -81,5 +89,9 @@ resource "aws_security_group" "rds" {
 
   tags = {
     Name = "${var.project_name}-rds-sg"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }

@@ -156,6 +156,10 @@ resource "aws_security_group" "vpc_endpoints" {
   tags = {
     Name = "${var.project_name}-vpce-sg"
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 resource "aws_vpc_endpoint" "ssm" {

@@ -106,6 +106,10 @@ resource "aws_lb_target_group" "app" {
   }
 
   deregistration_delay = 30 # faster deploys - don't wait long for connection draining on a low-traffic health check target
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # HTTP listener forwards traffic to target group (CloudFront connects over port 80)
