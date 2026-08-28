@@ -70,30 +70,32 @@ jobs:
       - name: Select or Create Dev Workspace
         run: terraform workspace select dev || terraform workspace new dev
 
-      - name: Terraform Apply (Dev)
-        run: terraform apply -var-file="dev.tfvars" -auto-approve
+      # - name: Terraform Apply (Dev)
+      #   run: terraform apply -var-file="dev.tfvars" -auto-approve
+      - name: Terraform Destroy (Dev)
+        run: terraform destroy -var-file="dev.tfvars" -auto-approve
 
-      - name: Export Terraform Outputs
-        id: tf_outputs
-        run: |
-          echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
-          echo "S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
+  #     - name: Export Terraform Outputs
+  #       id: tf_outputs
+  #       run: |
+  #         echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+  #         echo "S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
 
-      - name: Upload Seed Images to S3
-        run: aws s3 sync generated_images/ s3://${{ env.S3_BUCKET_NAME }}/uploads/products/
+  #     - name: Upload Seed Images to S3
+  #       run: aws s3 sync generated_images/ s3://${{ env.S3_BUCKET_NAME }}/uploads/products/
 
 
-      - name: Install Deploy Script Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install boto3
+  #     - name: Install Deploy Script Dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install boto3
 
-      - name: Execute App Deployment Script
-        run: python script/deploy.py
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          CLOUDFRONT_URL: ${{ env.CLOUDFRONT_URL }}
+  #     - name: Execute App Deployment Script
+  #       run: python script/deploy.py
+  #       env:
+  #         AWS_REGION: ${{ env.AWS_REGION }}
+  #         PROJECT_NAME: ${{ env.PROJECT_NAME }}
+  #         CLOUDFRONT_URL: ${{ env.CLOUDFRONT_URL }}
 
   # ------------------------------------------------------------------
   # Job 2: Deploy to PRODUCTION Environment (main branch only)
@@ -148,27 +150,30 @@ jobs:
       - name: Select or Create Prod Workspace
         run: terraform workspace select prod || terraform workspace new prod
 
-      - name: Terraform Apply (Prod)
-        run: terraform apply -var-file="terraform.tfvars" -auto-approve
+      - name: Terraform Destroy (Prod)
+        run: terraform destroy -var-file="terraform.tfvars" -auto-approve
 
-      - name: Export Terraform Outputs
-        id: tf_outputs
-        run: |
-          echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
-          echo "S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
+  #     - name: Terraform Apply (Prod)
+  #       run: terraform apply -var-file="terraform.tfvars" -auto-approve
 
-      - name: Upload Seed Images to S3
-        run: aws s3 sync generated_images/ s3://${{ env.S3_BUCKET_NAME }}/uploads/products/
+  #     - name: Export Terraform Outputs
+  #       id: tf_outputs
+  #       run: |
+  #         echo "CLOUDFRONT_URL=https://$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+  #         echo "S3_BUCKET_NAME=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
+
+  #     - name: Upload Seed Images to S3
+  #       run: aws s3 sync generated_images/ s3://${{ env.S3_BUCKET_NAME }}/uploads/products/
 
 
-      - name: Install Deploy Script Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install boto3
+  #     - name: Install Deploy Script Dependencies
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install boto3
 
-      - name: Execute App Deployment Script
-        run: python script/deploy.py
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          PROJECT_NAME: ${{ env.PROJECT_NAME }}
-          CLOUDFRONT_URL: ${{ env.CLOUDFRONT_URL }}
+  #     - name: Execute App Deployment Script
+  #       run: python script/deploy.py
+  #       env:
+  #         AWS_REGION: ${{ env.AWS_REGION }}
+  #         PROJECT_NAME: ${{ env.PROJECT_NAME }}
+  #         CLOUDFRONT_URL: ${{ env.CLOUDFRONT_URL }}
